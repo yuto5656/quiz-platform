@@ -6,6 +6,7 @@ import { QuizCard } from "@/components/quiz/quiz-card";
 import { CategoryList } from "@/components/quiz/category-list";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, Trophy, Users } from "lucide-react";
+import { HeaderAd, InFeedAd } from "@/components/ads";
 
 async function getCategories() {
   const categories = await prisma.category.findMany({
@@ -135,6 +136,9 @@ export default async function HomePage() {
           </div>
         </section>
 
+        {/* Header Ad */}
+        <HeaderAd className="border-b" />
+
         {/* Categories */}
         <section id="categories" className="py-12">
           <div className="container">
@@ -169,6 +173,11 @@ export default async function HomePage() {
             </div>
           </section>
         )}
+
+        {/* In-feed Ad between sections */}
+        <div className="container">
+          <InFeedAd />
+        </div>
 
         {/* Newest Quizzes */}
         {newestQuizzes.length > 0 && (

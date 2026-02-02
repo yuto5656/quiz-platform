@@ -24,6 +24,7 @@ import {
   ArrowLeft,
   Share2,
 } from "lucide-react";
+import { SidebarAd } from "@/components/ads";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -241,6 +242,9 @@ export default async function QuizDetailPage({ params }: Props) {
                   </p>
                 </CardContent>
               </Card>
+
+              {/* Sidebar Ad */}
+              <SidebarAd />
             </div>
           </div>
         </div>

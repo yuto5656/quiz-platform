@@ -25,6 +25,7 @@ import {
   Loader2,
   Clock,
 } from "lucide-react";
+import { ResultAd } from "@/components/ads";
 
 interface QuestionResult {
   questionId: string;
@@ -204,6 +205,9 @@ export default function ResultPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Ad placement */}
+          <ResultAd className="mb-8" />
 
           {/* Details Toggle */}
           <div className="text-center mb-6">
