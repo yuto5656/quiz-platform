@@ -1,7 +1,12 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Providers } from "@/providers";
 import { SkipLink } from "@/components/common/skip-link";
+import {
+  generateDefaultMetadata,
+  generateWebsiteJsonLd,
+  generateOrganizationJsonLd,
+} from "@/lib/seo";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,10 +19,15 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Quiz Platform - クイズを作って解こう",
-  description:
-    "誰でも無料でクイズを作成・公開できるプラットフォーム。様々なカテゴリのクイズに挑戦しよう。",
+export const metadata: Metadata = generateDefaultMetadata();
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "white" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
 };
 
 export default function RootLayout({
@@ -34,6 +44,19 @@ export default function RootLayout({
           <SkipLink />
           <div id="main-content">{children}</div>
         </Providers>
+        {/* JSON-LD structured data for SEO */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(generateWebsiteJsonLd()),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(generateOrganizationJsonLd()),
+          }}
+        />
       </body>
     </html>
   );

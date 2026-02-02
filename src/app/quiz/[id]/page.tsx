@@ -1,7 +1,9 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { generateQuizMetadata, generateQuizJsonLd } from "@/lib/seo";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
@@ -25,6 +27,31 @@ import {
 
 interface Props {
   params: Promise<{ id: string }>;
+}
+
+// 動的メタデータを生成
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const quiz = await prisma.quiz.findUnique({
+    where: { id, isPublic: true },
+    include: {
+      category: { select: { name: true } },
+      _count: { select: { questions: true } },
+    },
+  });
+
+  if (!quiz) {
+    return { title: "クイズが見つかりません" };
+  }
+
+  return generateQuizMetadata({
+    id: quiz.id,
+    title: quiz.title,
+    description: quiz.description,
+    category: quiz.category,
+    questionCount: quiz._count.questions,
+    playCount: quiz.playCount,
+  });
 }
 
 async function getQuiz(id: string) {
@@ -219,6 +246,24 @@ export default async function QuizDetailPage({ params }: Props) {
         </div>
       </main>
       <Footer />
+      {/* JSON-LD structured data for this quiz */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(
+            generateQuizJsonLd({
+              id: quiz.id,
+              title: quiz.title,
+              description: quiz.description,
+              category: quiz.category,
+              author: quiz.author,
+              questionCount: quiz._count.questions,
+              createdAt: quiz.createdAt,
+              updatedAt: quiz.updatedAt,
+            })
+          ),
+        }}
+      />
     </div>
   );
 }

@@ -1,6 +1,8 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { generateCategoryMetadata } from "@/lib/seo";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { QuizCard } from "@/components/quiz/quiz-card";
@@ -151,16 +153,23 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   );
 }
 
-export async function generateMetadata({ params }: CategoryPageProps) {
+export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const category = await getCategory(slug);
+  const category = await prisma.category.findUnique({
+    where: { slug },
+    include: {
+      _count: { select: { quizzes: { where: { isPublic: true } } } },
+    },
+  });
 
   if (!category) {
     return { title: "カテゴリが見つかりません" };
   }
 
-  return {
-    title: `${category.name}のクイズ一覧 | Quiz Platform`,
-    description: category.description || `${category.name}カテゴリのクイズ一覧`,
-  };
+  return generateCategoryMetadata({
+    name: category.name,
+    slug: category.slug,
+    description: category.description,
+    quizCount: category._count.quizzes,
+  });
 }
