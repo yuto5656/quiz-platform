@@ -2,15 +2,18 @@
 
 import { SessionProvider } from "./session-provider";
 import { ThemeProvider } from "./theme-provider";
+import { QueryProvider } from "./query-provider";
 import { Toaster } from "@/components/ui/sonner";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <SessionProvider>
-      <ThemeProvider>
-        {children}
-        <Toaster />
-      </ThemeProvider>
-    </SessionProvider>
+    <QueryProvider>
+      <SessionProvider>
+        <ThemeProvider>
+          {children}
+          <Toaster />
+        </ThemeProvider>
+      </SessionProvider>
+    </QueryProvider>
   );
 }
