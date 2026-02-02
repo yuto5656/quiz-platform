@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
@@ -24,7 +24,7 @@ import {
   Loader2,
   Clock,
 } from "lucide-react";
-import { ResultAd } from "@/components/ads";
+import { ResultAd, InFeedAd } from "@/components/ads";
 import { ShareButton } from "@/components/common/share-button";
 
 interface QuestionResult {
@@ -225,8 +225,12 @@ export default function ResultPage() {
             <div className="space-y-4">
               <h2 className="text-xl font-bold">回答詳細</h2>
               {data.results.map((result, index) => (
+                <Fragment key={result.questionId}>
+                {/* Show ad after every 5 questions */}
+                {index > 0 && index % 5 === 0 && (
+                  <InFeedAd className="my-4" />
+                )}
                 <Card
-                  key={result.questionId}
                   className={
                     result.isCorrect
                       ? "border-green-200 dark:border-green-800"
@@ -293,6 +297,7 @@ export default function ResultPage() {
                     )}
                   </CardContent>
                 </Card>
+                </Fragment>
               ))}
             </div>
           )}

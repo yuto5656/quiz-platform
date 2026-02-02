@@ -17,6 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Trophy, Medal, Award, Users, Gamepad2, Sparkles } from "lucide-react";
+import { SidebarAd, InFeedAd } from "@/components/ads";
 
 interface UserRanking {
   rank: number;
@@ -237,6 +238,9 @@ export default function RankingsPage() {
             </p>
           </div>
 
+          <div className="flex gap-8">
+            {/* Main Content */}
+            <div className="flex-1 min-w-0">
           <Tabs defaultValue="users" className="space-y-6">
             <TabsList className="grid w-full grid-cols-3 max-w-md">
               <TabsTrigger value="users" className="flex items-center gap-2">
@@ -319,6 +323,14 @@ export default function RankingsPage() {
               </Card>
             </TabsContent>
           </Tabs>
+            </div>
+
+            {/* Sidebar Ad */}
+            <SidebarAd />
+          </div>
+
+          {/* Bottom Ad */}
+          <InFeedAd className="mt-8" />
         </div>
       </main>
       <Footer />

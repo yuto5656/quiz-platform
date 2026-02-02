@@ -23,7 +23,7 @@ import {
   Trophy,
   ArrowLeft,
 } from "lucide-react";
-import { SidebarAd } from "@/components/ads";
+import { SidebarAd, InFeedAd } from "@/components/ads";
 import { ShareButton } from "@/components/common/share-button";
 
 interface Props {
@@ -168,6 +168,9 @@ export default async function QuizDetailPage({ params }: Props) {
                   </CardContent>
                 </Card>
               </div>
+
+              {/* In-content Ad */}
+              <InFeedAd />
 
               {/* Author */}
               <Card>
