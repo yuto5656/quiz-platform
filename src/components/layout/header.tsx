@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "@/components/auth/user-menu";
 import { ThemeToggle } from "@/components/common/theme-toggle";
-import { PlusCircle, Search } from "lucide-react";
+import { PlusCircle, Search, Trophy } from "lucide-react";
 
 export function Header() {
   const { data: session, status } = useSession();
@@ -29,6 +29,13 @@ export function Header() {
               className="transition-colors hover:text-foreground/80 text-foreground/60"
             >
               検索
+            </Link>
+            <Link
+              href="/rankings"
+              className="transition-colors hover:text-foreground/80 text-foreground/60 flex items-center gap-1"
+            >
+              <Trophy className="h-4 w-4" />
+              ランキング
             </Link>
           </nav>
         </div>

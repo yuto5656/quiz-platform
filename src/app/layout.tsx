@@ -7,6 +7,7 @@ import {
   generateWebsiteJsonLd,
   generateOrganizationJsonLd,
 } from "@/lib/seo";
+import { GoogleAnalytics } from "@/components/analytics";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -37,9 +38,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja" suppressHydrationWarning>
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Quiz Platform" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background`}
       >
+        <GoogleAnalytics />
         <Providers>
           <SkipLink />
           <div id="main-content">{children}</div>

@@ -71,6 +71,7 @@ model User {
   quizzes         Quiz[]          @relation("CreatedQuizzes")
   answerHistories AnswerHistory[]
   scores          Score[]
+  likes           Like[]
 
   @@index([totalScore(sort: Desc)])
 }
@@ -140,6 +141,7 @@ model Quiz {
   questions Question[]
   tags      QuizTag[]
   scores    Score[]
+  likes     Like[]
 
   @@index([categoryId])
   @@index([authorId])
@@ -221,4 +223,21 @@ model Score {
   @@index([quizId])
   @@index([score(sort: Desc)])
   @@index([createdAt(sort: Desc)])
+}
+
+// ========== お気に入り ==========
+
+model Like {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  quizId String
+  quiz   Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, quizId])
+  @@index([userId])
+  @@index([quizId])
 }

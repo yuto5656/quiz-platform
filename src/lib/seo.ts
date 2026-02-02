@@ -158,11 +158,20 @@ export function generateDefaultMetadata(): Metadata {
       title: siteConfig.title,
       description: siteConfig.description,
       siteName: siteConfig.name,
+      images: [
+        {
+          url: `${siteConfig.url}/api/og?title=${encodeURIComponent(siteConfig.title)}&description=${encodeURIComponent(siteConfig.description)}`,
+          width: 1200,
+          height: 630,
+          alt: siteConfig.title,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: siteConfig.title,
       description: siteConfig.description,
+      images: [`${siteConfig.url}/api/og?title=${encodeURIComponent(siteConfig.title)}&description=${encodeURIComponent(siteConfig.description)}`],
     },
     alternates: {
       canonical: siteConfig.url,
@@ -201,11 +210,20 @@ export function generateQuizMetadata(quiz: QuizMetadataInput): Metadata {
       title: `${title} | ${siteConfig.name}`,
       description,
       url,
+      images: [
+        {
+          url: `${siteConfig.url}/api/og?title=${encodeURIComponent(title)}&description=${encodeURIComponent(description)}&type=quiz`,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: `${title} | ${siteConfig.name}`,
       description,
+      images: [`${siteConfig.url}/api/og?title=${encodeURIComponent(title)}&description=${encodeURIComponent(description)}&type=quiz`],
     },
     alternates: {
       canonical: url,
