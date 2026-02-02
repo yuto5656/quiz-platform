@@ -7,8 +7,3 @@ export const localeNames: Record<Locale, string> = {
   ja: "日本語",
   en: "English",
 };
-
-export const localeFlags: Record<Locale, string> = {
-  ja: "🇯🇵",
-  en: "🇺🇸",
-};
