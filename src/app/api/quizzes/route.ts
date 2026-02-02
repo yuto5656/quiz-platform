@@ -8,7 +8,7 @@ const querySchema = z.object({
   limit: z.coerce.number().int().positive().max(50).default(12),
   categoryId: z.string().optional(),
   search: z.string().optional(),
-  sortBy: z.enum(["popular", "newest", "rating"]).default("newest"),
+  sortBy: z.enum(["popular", "newest", "score"]).default("newest"),
   authorId: z.string().optional(),
 });
 
@@ -18,8 +18,8 @@ export async function GET(request: NextRequest) {
     const params = querySchema.parse({
       page: searchParams.get("page") || 1,
       limit: searchParams.get("limit") || 12,
-      categoryId: searchParams.get("categoryId") || undefined,
-      search: searchParams.get("search") || undefined,
+      categoryId: searchParams.get("categoryId") || searchParams.get("category") || undefined,
+      search: searchParams.get("search") || searchParams.get("q") || undefined,
       sortBy: searchParams.get("sortBy") || "newest",
       authorId: searchParams.get("authorId") || undefined,
     });
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     const orderBy = {
       popular: { playCount: "desc" as const },
       newest: { createdAt: "desc" as const },
-      rating: { avgScore: "desc" as const },
+      score: { avgScore: "desc" as const },
     }[params.sortBy];
 
     const [quizzes, totalCount] = await Promise.all([
@@ -78,6 +78,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       quizzes: result,
+      total: totalCount,
+      totalPages: Math.ceil(totalCount / params.limit),
       pagination: {
         currentPage: params.page,
         totalPages: Math.ceil(totalCount / params.limit),

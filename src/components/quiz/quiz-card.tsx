@@ -27,7 +27,7 @@ interface QuizCardProps {
     };
     questionCount: number;
     playCount: number;
-    avgScore: number;
+    avgScore: number | null;
     timeLimit: number | null;
   };
   showAuthor?: boolean;

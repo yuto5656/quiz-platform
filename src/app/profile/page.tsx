@@ -1,0 +1,225 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
+import { Header } from "@/components/layout/header";
+import { Footer } from "@/components/layout/footer";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Loader2, Save, ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
+
+interface UserData {
+  id: string;
+  name: string | null;
+  email: string | null;
+  image: string | null;
+  displayName: string | null;
+  bio: string | null;
+}
+
+export default function ProfilePage() {
+  const router = useRouter();
+  const { data: session, status } = useSession();
+
+  const [user, setUser] = useState<UserData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const [displayName, setDisplayName] = useState("");
+  const [bio, setBio] = useState("");
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login?callbackUrl=/profile");
+    }
+  }, [status, router]);
+
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const res = await fetch("/api/users/me");
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data.user);
+          setDisplayName(data.user.displayName || "");
+          setBio(data.user.bio || "");
+        }
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    if (status === "authenticated") {
+      fetchUser();
+    }
+  }, [status]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+
+    try {
+      const res = await fetch("/api/users/me", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: displayName || undefined,
+          bio: bio || undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to update profile");
+      }
+
+      const updatedUser = await res.json();
+      setUser((prev) => (prev ? { ...prev, ...updatedUser } : null));
+      toast.success("プロフィールを更新しました");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "プロフィールの更新に失敗しました"
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (status === "loading" || isLoading) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-muted-foreground">ユーザー情報が見つかりません</p>
+        </div>
+      </div>
+    );
+  }
+
+  const initials =
+    user.name
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase() || "?";
+
+  return (
+    <div className="flex min-h-screen flex-col">
+      <Header />
+      <main className="flex-1 bg-muted/30">
+        <div className="container py-8">
+          <div className="mb-6">
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/dashboard">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                ダッシュボードに戻る
+              </Link>
+            </Button>
+          </div>
+
+          <div className="max-w-2xl mx-auto">
+            <Card>
+              <CardHeader>
+                <CardTitle>プロフィール編集</CardTitle>
+                <CardDescription>
+                  公開プロフィール情報を編集できます
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Avatar and Account Info */}
+                  <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
+                    <Avatar className="h-16 w-16">
+                      <AvatarImage src={user.image || ""} />
+                      <AvatarFallback className="text-xl">{initials}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium">{user.name || "ユーザー"}</p>
+                      <p className="text-sm text-muted-foreground">{user.email}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        アバターとメールはログインプロバイダから取得されます
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Display Name */}
+                  <div className="space-y-2">
+                    <Label htmlFor="displayName">表示名</Label>
+                    <Input
+                      id="displayName"
+                      placeholder="公開される名前を入力"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      maxLength={50}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      空欄の場合はアカウント名が表示されます
+                    </p>
+                  </div>
+
+                  {/* Bio */}
+                  <div className="space-y-2">
+                    <Label htmlFor="bio">自己紹介</Label>
+                    <Textarea
+                      id="bio"
+                      placeholder="自己紹介を入力..."
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      maxLength={500}
+                      rows={4}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {bio.length}/500文字
+                    </p>
+                  </div>
+
+                  {/* Submit */}
+                  <div className="flex justify-end gap-4">
+                    <Button type="button" variant="outline" asChild>
+                      <Link href="/dashboard">キャンセル</Link>
+                    </Button>
+                    <Button type="submit" disabled={isSaving}>
+                      {isSaving ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="mr-2 h-4 w-4" />
+                      )}
+                      保存する
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
+}

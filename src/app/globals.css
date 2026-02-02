@@ -122,7 +122,29 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Custom container - override Tailwind's default */
+.container {
+  width: 100% !important;
+  max-width: 80rem !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+}
+
+@media (min-width: 640px) {
   .container {
-    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
   }
 }
+
+@media (min-width: 1024px) {
+  .container {
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+  }
+}
+

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { z } from "zod";
 
 export async function GET() {
   try {
@@ -71,6 +72,53 @@ export async function GET() {
     console.error("Failed to fetch user:", error);
     return NextResponse.json(
       { error: "Failed to fetch user" },
+      { status: 500 }
+    );
+  }
+}
+
+const updateUserSchema = z.object({
+  displayName: z.string().max(50).optional(),
+  bio: z.string().max(500).optional(),
+});
+
+export async function PUT(request: NextRequest) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const data = updateUserSchema.parse(body);
+
+    const user = await prisma.user.update({
+      where: { id: session.user.id },
+      data: {
+        displayName: data.displayName,
+        bio: data.bio,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        displayName: true,
+        bio: true,
+      },
+    });
+
+    return NextResponse.json(user);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Validation error", details: error.issues },
+        { status: 400 }
+      );
+    }
+    console.error("Failed to update user:", error);
+    return NextResponse.json(
+      { error: "Failed to update user" },
       { status: 500 }
     );
   }
