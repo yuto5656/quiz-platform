@@ -4,6 +4,81 @@ import type { Metadata } from "next";
  * SEO utilities for the quiz platform
  */
 
+// Type definitions for JSON-LD
+export interface QuizJsonLd {
+  "@context": string;
+  "@type": string;
+  name: string;
+  description: string;
+  about: { "@type": string; name: string };
+  author: { "@type": string; name: string };
+  numberOfQuestions: number;
+  dateCreated: string;
+  dateModified: string;
+  url: string;
+  provider: { "@type": string; name: string; url: string };
+}
+
+export interface WebsiteJsonLd {
+  "@context": string;
+  "@type": string;
+  name: string;
+  description: string;
+  url: string;
+  potentialAction: {
+    "@type": string;
+    target: { "@type": string; urlTemplate: string };
+    "query-input": string;
+  };
+}
+
+export interface OrganizationJsonLd {
+  "@context": string;
+  "@type": string;
+  name: string;
+  url: string;
+  logo: string;
+  sameAs: string[];
+}
+
+// Input types for metadata generators
+export interface QuizMetadataInput {
+  id: string;
+  title: string;
+  description: string | null;
+  category: { name: string };
+  questionCount: number;
+  playCount: number;
+}
+
+export interface CategoryMetadataInput {
+  name: string;
+  slug: string;
+  description: string | null;
+  quizCount: number;
+}
+
+export interface UserMetadataInput {
+  id: string;
+  name: string | null;
+  bio: string | null;
+  quizCount: number;
+}
+
+export interface QuizJsonLdInput {
+  id: string;
+  title: string;
+  description: string | null;
+  category: { name: string };
+  author: { name: string | null };
+  questionCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Constants
+const MAX_DESCRIPTION_LENGTH = 160; // SEO best practice for meta description
+
 // サイトの基本情報
 export const siteConfig = {
   name: "Quiz Platform",
@@ -23,7 +98,31 @@ export const siteConfig = {
     "学習",
     "無料",
     "オンライン",
-  ],
+  ] as string[],
+};
+
+/**
+ * Truncate description to SEO-recommended length
+ */
+export function truncateDescription(
+  description: string,
+  maxLength: number = MAX_DESCRIPTION_LENGTH
+): string {
+  if (description.length <= maxLength) {
+    return description;
+  }
+  return description.slice(0, maxLength - 3) + "...";
+}
+
+/**
+ * URL helpers for consistent URL generation
+ */
+export const urlHelpers = {
+  quiz: (id: string) => `${siteConfig.url}/quiz/${id}`,
+  category: (slug: string) => `${siteConfig.url}/quiz/category/${slug}`,
+  profile: (id: string) => `${siteConfig.url}/profile/${id}`,
+  search: (query?: string) =>
+    query ? `${siteConfig.url}/search?q=${encodeURIComponent(query)}` : `${siteConfig.url}/search`,
 };
 
 /**
@@ -78,18 +177,13 @@ export function generateDefaultMetadata(): Metadata {
 /**
  * クイズ詳細ページ用のメタデータを生成
  */
-export function generateQuizMetadata(quiz: {
-  id: string;
-  title: string;
-  description: string | null;
-  category: { name: string };
-  questionCount: number;
-  playCount: number;
-}): Metadata {
+export function generateQuizMetadata(quiz: QuizMetadataInput): Metadata {
   const title = quiz.title;
-  const description =
+  const rawDescription =
     quiz.description ||
     `${quiz.category.name}の${quiz.title}に挑戦しよう！全${quiz.questionCount}問、${quiz.playCount}人がプレイ中。`;
+  const description = truncateDescription(rawDescription);
+  const url = urlHelpers.quiz(quiz.id);
 
   return {
     title,
@@ -106,7 +200,7 @@ export function generateQuizMetadata(quiz: {
       type: "article",
       title: `${title} | ${siteConfig.name}`,
       description,
-      url: `${siteConfig.url}/quiz/${quiz.id}`,
+      url,
     },
     twitter: {
       card: "summary_large_image",
@@ -114,7 +208,7 @@ export function generateQuizMetadata(quiz: {
       description,
     },
     alternates: {
-      canonical: `${siteConfig.url}/quiz/${quiz.id}`,
+      canonical: url,
     },
   };
 }
@@ -122,16 +216,13 @@ export function generateQuizMetadata(quiz: {
 /**
  * カテゴリページ用のメタデータを生成
  */
-export function generateCategoryMetadata(category: {
-  name: string;
-  slug: string;
-  description: string | null;
-  quizCount: number;
-}): Metadata {
+export function generateCategoryMetadata(category: CategoryMetadataInput): Metadata {
   const title = `${category.name}のクイズ一覧`;
-  const description =
+  const rawDescription =
     category.description ||
     `${category.name}に関するクイズが${category.quizCount}件あります。無料でオンラインクイズに挑戦しよう。`;
+  const description = truncateDescription(rawDescription);
+  const url = urlHelpers.category(category.slug);
 
   return {
     title,
@@ -141,7 +232,7 @@ export function generateCategoryMetadata(category: {
       type: "website",
       title: `${title} | ${siteConfig.name}`,
       description,
-      url: `${siteConfig.url}/quiz/category/${category.slug}`,
+      url,
     },
     twitter: {
       card: "summary",
@@ -149,7 +240,7 @@ export function generateCategoryMetadata(category: {
       description,
     },
     alternates: {
-      canonical: `${siteConfig.url}/quiz/category/${category.slug}`,
+      canonical: url,
     },
   };
 }
@@ -176,15 +267,13 @@ export function generateSearchMetadata(query?: string): Metadata {
 /**
  * ユーザープロフィールページ用のメタデータを生成
  */
-export function generateUserMetadata(user: {
-  id: string;
-  name: string | null;
-  bio: string | null;
-  quizCount: number;
-}): Metadata {
-  const title = `${user.name || "ユーザー"}のプロフィール`;
-  const description =
-    user.bio || `${user.name || "ユーザー"}さんの作成したクイズ（${user.quizCount}件）`;
+export function generateUserMetadata(user: UserMetadataInput): Metadata {
+  const displayName = user.name || "ユーザー";
+  const title = `${displayName}のプロフィール`;
+  const rawDescription =
+    user.bio || `${displayName}さんの作成したクイズ（${user.quizCount}件）`;
+  const description = truncateDescription(rawDescription);
+  const url = urlHelpers.profile(user.id);
 
   return {
     title,
@@ -193,10 +282,10 @@ export function generateUserMetadata(user: {
       type: "profile",
       title: `${title} | ${siteConfig.name}`,
       description,
-      url: `${siteConfig.url}/profile/${user.id}`,
+      url,
     },
     alternates: {
-      canonical: `${siteConfig.url}/profile/${user.id}`,
+      canonical: url,
     },
   };
 }
@@ -204,16 +293,7 @@ export function generateUserMetadata(user: {
 /**
  * JSON-LD構造化データ: クイズ用
  */
-export function generateQuizJsonLd(quiz: {
-  id: string;
-  title: string;
-  description: string | null;
-  category: { name: string };
-  author: { name: string | null };
-  questionCount: number;
-  createdAt: Date;
-  updatedAt: Date;
-}) {
+export function generateQuizJsonLd(quiz: QuizJsonLdInput): QuizJsonLd {
   return {
     "@context": "https://schema.org",
     "@type": "Quiz",
@@ -230,7 +310,7 @@ export function generateQuizJsonLd(quiz: {
     numberOfQuestions: quiz.questionCount,
     dateCreated: quiz.createdAt.toISOString(),
     dateModified: quiz.updatedAt.toISOString(),
-    url: `${siteConfig.url}/quiz/${quiz.id}`,
+    url: urlHelpers.quiz(quiz.id),
     provider: {
       "@type": "Organization",
       name: siteConfig.name,
@@ -242,7 +322,7 @@ export function generateQuizJsonLd(quiz: {
 /**
  * JSON-LD構造化データ: サイト全体用
  */
-export function generateWebsiteJsonLd() {
+export function generateWebsiteJsonLd(): WebsiteJsonLd {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -263,7 +343,7 @@ export function generateWebsiteJsonLd() {
 /**
  * JSON-LD構造化データ: 組織用
  */
-export function generateOrganizationJsonLd() {
+export function generateOrganizationJsonLd(): OrganizationJsonLd {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",

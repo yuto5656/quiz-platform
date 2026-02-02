@@ -6,6 +6,19 @@ import { ZodError } from "zod";
  * Provides consistent response format across all API endpoints
  */
 
+// HTTP Status Code constants for consistency
+export const HttpStatus = {
+  OK: 200,
+  CREATED: 201,
+  BAD_REQUEST: 400,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  NOT_FOUND: 404,
+  METHOD_NOT_ALLOWED: 405,
+  TOO_MANY_REQUESTS: 429,
+  INTERNAL_SERVER_ERROR: 500,
+} as const;
+
 export type ApiSuccessResponse<T> = {
   success: true;
   data: T;
@@ -89,10 +102,12 @@ export function handleApiError(error: unknown) {
 
 /**
  * Sanitize user input to prevent XSS
+ * Escapes HTML special characters: & < > " '
  * Basic sanitization - consider using a library like DOMPurify for complex cases
  */
 export function sanitizeInput(input: string): string {
   return input
+    .replace(/&/g, "&amp;") // Must be first to avoid double-escaping
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
@@ -104,14 +119,48 @@ export function sanitizeInput(input: string): string {
  * Rate limiting helper (simple in-memory implementation)
  * For production, consider using Redis or a dedicated rate limiting service
  */
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+interface RateLimitRecord {
+  count: number;
+  resetTime: number;
+}
 
+const rateLimitMap = new Map<string, RateLimitRecord>();
+const CLEANUP_INTERVAL_MS = 60000; // Cleanup expired entries every minute
+let lastCleanup = Date.now();
+
+/**
+ * Clean up expired rate limit entries to prevent memory leaks
+ */
+function cleanupExpiredEntries(now: number): void {
+  if (now - lastCleanup < CLEANUP_INTERVAL_MS) {
+    return;
+  }
+
+  for (const [key, record] of rateLimitMap) {
+    if (now > record.resetTime) {
+      rateLimitMap.delete(key);
+    }
+  }
+  lastCleanup = now;
+}
+
+/**
+ * Check if a request is within rate limits
+ * @param identifier - Unique identifier for the client (e.g., IP address, user ID)
+ * @param limit - Maximum number of requests allowed in the window
+ * @param windowMs - Time window in milliseconds
+ * @returns true if request is allowed, false if rate limited
+ */
 export function checkRateLimit(
   identifier: string,
   limit: number = 100,
   windowMs: number = 60000
 ): boolean {
   const now = Date.now();
+
+  // Periodically clean up expired entries
+  cleanupExpiredEntries(now);
+
   const record = rateLimitMap.get(identifier);
 
   if (!record || now > record.resetTime) {
@@ -125,4 +174,19 @@ export function checkRateLimit(
 
   record.count++;
   return true;
+}
+
+/**
+ * Reset rate limit for a specific identifier (useful for testing)
+ */
+export function resetRateLimit(identifier: string): void {
+  rateLimitMap.delete(identifier);
+}
+
+/**
+ * Clear all rate limit records (useful for testing)
+ */
+export function clearAllRateLimits(): void {
+  rateLimitMap.clear();
+  lastCleanup = Date.now();
 }
