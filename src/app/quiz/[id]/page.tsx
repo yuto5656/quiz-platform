@@ -22,9 +22,9 @@ import {
   Users,
   Trophy,
   ArrowLeft,
-  Share2,
 } from "lucide-react";
 import { SidebarAd } from "@/components/ads";
+import { ShareButton } from "@/components/common/share-button";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -220,10 +220,13 @@ export default async function QuizDetailPage({ params }: Props) {
                       クイズを開始
                     </Link>
                   </Button>
-                  <Button variant="outline" className="w-full" size="sm">
-                    <Share2 className="mr-2 h-4 w-4" />
-                    シェア
-                  </Button>
+                  <ShareButton
+                    url={`/quiz/${quiz.id}`}
+                    title={quiz.title}
+                    description={quiz.description || `${quiz._count.questions}問のクイズに挑戦しよう！`}
+                    variant="outline"
+                    size="sm"
+                  />
                 </CardContent>
               </Card>
 

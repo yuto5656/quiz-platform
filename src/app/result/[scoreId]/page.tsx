@@ -21,11 +21,11 @@ import {
   Trophy,
   Home,
   RotateCcw,
-  Share2,
   Loader2,
   Clock,
 } from "lucide-react";
 import { ResultAd } from "@/components/ads";
+import { ShareButton } from "@/components/common/share-button";
 
 interface QuestionResult {
   questionId: string;
@@ -198,10 +198,11 @@ export default function ResultPage() {
                     トップへ戻る
                   </Link>
                 </Button>
-                <Button variant="outline">
-                  <Share2 className="mr-2 h-4 w-4" />
-                  シェア
-                </Button>
+                <ShareButton
+                  url={`/quiz/${data.quiz.id}`}
+                  title={`「${data.quiz.title}」で${data.percentage.toFixed(0)}%を獲得しました！`}
+                  description={`${data.correctCount}/${data.totalCount}問正解 - Quiz Platformで挑戦しよう`}
+                />
               </div>
             </CardContent>
           </Card>
