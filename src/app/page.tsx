@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
@@ -74,6 +75,9 @@ async function getNewestQuizzes() {
 }
 
 export default async function HomePage() {
+  const t = await getTranslations("home");
+  const tCommon = await getTranslations("common");
+
   const [categories, popularQuizzes, newestQuizzes] = await Promise.all([
     getCategories(),
     getPopularQuizzes(),
@@ -89,25 +93,21 @@ export default async function HomePage() {
           <div className="container">
             <div className="mx-auto max-w-3xl text-center">
               <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
-                クイズを作って、
-                <br className="sm:hidden" />
-                みんなで楽しもう
+                {t("hero.title")}
               </h1>
               <p className="mt-4 text-lg text-muted-foreground">
-                誰でも無料でクイズを作成・公開できるプラットフォーム。
-                <br className="hidden sm:inline" />
-                様々なカテゴリのクイズに挑戦して知識を試そう。
+                {t("hero.subtitle")}
               </p>
               <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
                 <Button size="lg" asChild>
                   <Link href="/create">
                     <Sparkles className="mr-2 h-5 w-5" />
-                    クイズを作成する
+                    {t("hero.createButton")}
                   </Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
                   <Link href="#categories">
-                    クイズを探す
+                    {t("hero.exploreButton")}
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
@@ -120,17 +120,17 @@ export default async function HomePage() {
                 <div className="text-2xl font-bold md:text-3xl">
                   {categories.reduce((sum, c) => sum + c.quizCount, 0)}+
                 </div>
-                <div className="text-sm text-muted-foreground">クイズ数</div>
+                <div className="text-sm text-muted-foreground">Quizzes</div>
               </div>
               <div>
                 <div className="text-2xl font-bold md:text-3xl">
                   {categories.length}
                 </div>
-                <div className="text-sm text-muted-foreground">カテゴリ</div>
+                <div className="text-sm text-muted-foreground">Categories</div>
               </div>
               <div>
-                <div className="text-2xl font-bold md:text-3xl">無料</div>
-                <div className="text-sm text-muted-foreground">利用料金</div>
+                <div className="text-2xl font-bold md:text-3xl">Free</div>
+                <div className="text-sm text-muted-foreground">Price</div>
               </div>
             </div>
           </div>
@@ -143,7 +143,7 @@ export default async function HomePage() {
         <section id="categories" className="py-12">
           <div className="container">
             <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-2xl font-bold">カテゴリから探す</h2>
+              <h2 className="text-2xl font-bold">{t("sections.categories")}</h2>
             </div>
             <CategoryList categories={categories} />
           </div>
@@ -156,11 +156,11 @@ export default async function HomePage() {
               <div className="mb-6 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Trophy className="h-5 w-5 text-yellow-500" />
-                  <h2 className="text-2xl font-bold">人気のクイズ</h2>
+                  <h2 className="text-2xl font-bold">{t("sections.popular")}</h2>
                 </div>
                 <Button variant="ghost" asChild>
                   <Link href="/search?sortBy=popular">
-                    もっと見る
+                    {t("sections.viewAll")}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
@@ -186,11 +186,11 @@ export default async function HomePage() {
               <div className="mb-6 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-blue-500" />
-                  <h2 className="text-2xl font-bold">新着クイズ</h2>
+                  <h2 className="text-2xl font-bold">{t("sections.recent")}</h2>
                 </div>
                 <Button variant="ghost" asChild>
                   <Link href="/search?sortBy=newest">
-                    もっと見る
+                    {t("sections.viewAll")}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
@@ -210,14 +210,13 @@ export default async function HomePage() {
             <div className="mx-auto max-w-2xl text-center">
               <Users className="mx-auto h-12 w-12 text-muted-foreground" />
               <h2 className="mt-4 text-2xl font-bold">
-                あなたもクイズを作成しませんか？
+                {t("hero.createButton")}
               </h2>
               <p className="mt-2 text-muted-foreground">
-                簡単な操作でオリジナルクイズを作成できます。
-                友達や同僚とシェアして楽しもう。
+                {t("hero.subtitle")}
               </p>
               <Button size="lg" className="mt-6" asChild>
-                <Link href="/create">今すぐ作成する</Link>
+                <Link href="/create">{tCommon("create")}</Link>
               </Button>
             </div>
           </div>

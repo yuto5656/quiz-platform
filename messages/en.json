@@ -1,0 +1,186 @@
+{
+  "common": {
+    "siteName": "Quiz Platform",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No",
+    "confirm": "Confirm",
+    "required": "Required"
+  },
+  "nav": {
+    "home": "Home",
+    "categories": "Categories",
+    "search": "Search",
+    "rankings": "Rankings",
+    "createQuiz": "Create Quiz",
+    "login": "Login",
+    "logout": "Logout",
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "settings": "Settings"
+  },
+  "home": {
+    "hero": {
+      "title": "Create Quizzes, Share the Fun",
+      "subtitle": "A platform where anyone can easily create and share quizzes",
+      "createButton": "Create a Quiz",
+      "exploreButton": "Explore Quizzes"
+    },
+    "sections": {
+      "categories": "Browse by Category",
+      "popular": "Popular Quizzes",
+      "recent": "Recent Quizzes",
+      "viewAll": "View All"
+    }
+  },
+  "quiz": {
+    "questions": "{count} questions",
+    "plays": "{count} plays",
+    "likes": "{count} likes",
+    "avgScore": "Average Score: {score}%",
+    "by": "By {author}",
+    "startQuiz": "Start Quiz",
+    "continueQuiz": "Continue",
+    "results": "View Results",
+    "share": "Share",
+    "like": "Like",
+    "unlike": "Unlike",
+    "correct": "Correct",
+    "incorrect": "Incorrect",
+    "score": "Score",
+    "timeSpent": "Time Spent",
+    "passed": "Passed",
+    "failed": "Failed",
+    "tryAgain": "Try Again",
+    "backToQuiz": "Back to Quiz"
+  },
+  "quizCreate": {
+    "title": "Create Quiz",
+    "editTitle": "Edit Quiz",
+    "basicInfo": "Basic Info",
+    "quizTitle": "Quiz Title",
+    "quizTitlePlaceholder": "e.g., World History Quiz",
+    "description": "Description",
+    "descriptionPlaceholder": "Enter quiz description",
+    "category": "Category",
+    "selectCategory": "Select a category",
+    "isPublic": "Make Public",
+    "questions": "Questions",
+    "addQuestion": "Add Question",
+    "questionText": "Question Text",
+    "options": "Options",
+    "correctAnswer": "Correct Answer",
+    "explanation": "Explanation",
+    "points": "Points",
+    "timeLimit": "Time Limit",
+    "passingScore": "Passing Score",
+    "preview": "Preview",
+    "publish": "Publish",
+    "saveDraft": "Save Draft"
+  },
+  "auth": {
+    "login": "Login",
+    "loginTitle": "Login",
+    "loginSubtitle": "Sign in to create and save your quizzes",
+    "loginWithGoogle": "Login with Google",
+    "loginWithGithub": "Login with GitHub",
+    "logout": "Logout",
+    "logoutConfirm": "Are you sure you want to logout?",
+    "welcomeBack": "Welcome back",
+    "newUser": "New here?",
+    "signUpPrompt": "Create an account to enjoy quizzes"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "myQuizzes": "My Quizzes",
+    "playHistory": "Play History",
+    "likedQuizzes": "Liked Quizzes",
+    "stats": "Statistics",
+    "totalQuizzes": "Quizzes Created",
+    "totalPlays": "Total Plays",
+    "totalScore": "Total Score",
+    "noQuizzes": "You haven't created any quizzes yet",
+    "noHistory": "No play history",
+    "noLikes": "No liked quizzes",
+    "createFirst": "Create your first quiz"
+  },
+  "rankings": {
+    "title": "Rankings",
+    "users": "User Rankings",
+    "quizzes": "Quiz Rankings",
+    "creators": "Creator Rankings",
+    "period": {
+      "all": "All Time",
+      "month": "This Month",
+      "week": "This Week"
+    },
+    "rank": "#{rank}",
+    "score": "{score} points",
+    "plays": "{count} plays"
+  },
+  "search": {
+    "title": "Search Quizzes",
+    "placeholder": "Search by keyword...",
+    "filters": "Filters",
+    "sortBy": "Sort by",
+    "sortOptions": {
+      "relevance": "Relevance",
+      "popular": "Most Popular",
+      "recent": "Most Recent",
+      "rating": "Highest Rated"
+    },
+    "noResults": "No results found",
+    "tryDifferent": "Try a different search term",
+    "resultsCount": "{count} quizzes found"
+  },
+  "profile": {
+    "title": "Profile",
+    "editProfile": "Edit Profile",
+    "displayName": "Display Name",
+    "bio": "Bio",
+    "bioPlaceholder": "Tell us about yourself",
+    "joinedAt": "Joined: {date}",
+    "quizzesCreated": "Quizzes Created: {count}",
+    "quizzesTaken": "Quizzes Taken: {count}",
+    "updateSuccess": "Profile updated successfully",
+    "updateError": "Failed to update profile"
+  },
+  "errors": {
+    "notFound": {
+      "title": "404",
+      "message": "Page Not Found",
+      "description": "The page you're looking for doesn't exist or has been moved.",
+      "backToHome": "Back to Home"
+    },
+    "serverError": {
+      "title": "500",
+      "message": "Server Error",
+      "description": "Sorry, something went wrong on our end.",
+      "retry": "Retry"
+    },
+    "unauthorized": "Please login to continue",
+    "forbidden": "You don't have permission to access this",
+    "validation": "Please check your input",
+    "network": "Network error occurred",
+    "unknown": "An unexpected error occurred"
+  },
+  "footer": {
+    "copyright": "© {year} Quiz Platform. All rights reserved.",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "contact": "Contact"
+  }
+}

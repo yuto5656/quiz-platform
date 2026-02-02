@@ -1,0 +1,186 @@
+{
+  "common": {
+    "siteName": "Quiz Platform",
+    "loading": "読み込み中...",
+    "error": "エラーが発生しました",
+    "retry": "再試行",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "edit": "編集",
+    "create": "作成",
+    "search": "検索",
+    "back": "戻る",
+    "next": "次へ",
+    "previous": "前へ",
+    "submit": "送信",
+    "close": "閉じる",
+    "yes": "はい",
+    "no": "いいえ",
+    "confirm": "確認",
+    "required": "必須"
+  },
+  "nav": {
+    "home": "ホーム",
+    "categories": "カテゴリ",
+    "search": "検索",
+    "rankings": "ランキング",
+    "createQuiz": "クイズ作成",
+    "login": "ログイン",
+    "logout": "ログアウト",
+    "dashboard": "ダッシュボード",
+    "profile": "プロフィール",
+    "settings": "設定"
+  },
+  "home": {
+    "hero": {
+      "title": "クイズを作って、みんなで楽しもう",
+      "subtitle": "誰でも簡単にクイズを作成・共有できるプラットフォーム",
+      "createButton": "クイズを作成する",
+      "exploreButton": "クイズを探す"
+    },
+    "sections": {
+      "categories": "カテゴリから探す",
+      "popular": "人気のクイズ",
+      "recent": "新着クイズ",
+      "viewAll": "すべて見る"
+    }
+  },
+  "quiz": {
+    "questions": "{count}問",
+    "plays": "{count}回プレイ",
+    "likes": "{count}いいね",
+    "avgScore": "平均スコア: {score}%",
+    "by": "作成者: {author}",
+    "startQuiz": "クイズを始める",
+    "continueQuiz": "続ける",
+    "results": "結果を見る",
+    "share": "シェア",
+    "like": "いいね",
+    "unlike": "いいね解除",
+    "correct": "正解",
+    "incorrect": "不正解",
+    "score": "スコア",
+    "timeSpent": "所要時間",
+    "passed": "合格",
+    "failed": "不合格",
+    "tryAgain": "もう一度挑戦",
+    "backToQuiz": "クイズに戻る"
+  },
+  "quizCreate": {
+    "title": "クイズを作成",
+    "editTitle": "クイズを編集",
+    "basicInfo": "基本情報",
+    "quizTitle": "クイズタイトル",
+    "quizTitlePlaceholder": "例: 日本の歴史クイズ",
+    "description": "説明",
+    "descriptionPlaceholder": "クイズの説明を入力してください",
+    "category": "カテゴリ",
+    "selectCategory": "カテゴリを選択",
+    "isPublic": "公開する",
+    "questions": "問題",
+    "addQuestion": "問題を追加",
+    "questionText": "問題文",
+    "options": "選択肢",
+    "correctAnswer": "正解",
+    "explanation": "解説",
+    "points": "配点",
+    "timeLimit": "制限時間",
+    "passingScore": "合格点",
+    "preview": "プレビュー",
+    "publish": "公開する",
+    "saveDraft": "下書き保存"
+  },
+  "auth": {
+    "login": "ログイン",
+    "loginTitle": "ログイン",
+    "loginSubtitle": "アカウントにログインしてクイズを作成・保存しましょう",
+    "loginWithGoogle": "Googleでログイン",
+    "loginWithGithub": "GitHubでログイン",
+    "logout": "ログアウト",
+    "logoutConfirm": "ログアウトしますか？",
+    "welcomeBack": "おかえりなさい",
+    "newUser": "新規ユーザーの方",
+    "signUpPrompt": "アカウントを作成してクイズを楽しみましょう"
+  },
+  "dashboard": {
+    "title": "マイページ",
+    "myQuizzes": "作成したクイズ",
+    "playHistory": "プレイ履歴",
+    "likedQuizzes": "いいねしたクイズ",
+    "stats": "統計",
+    "totalQuizzes": "作成クイズ数",
+    "totalPlays": "総プレイ数",
+    "totalScore": "累計スコア",
+    "noQuizzes": "まだクイズを作成していません",
+    "noHistory": "プレイ履歴がありません",
+    "noLikes": "いいねしたクイズがありません",
+    "createFirst": "最初のクイズを作成しましょう"
+  },
+  "rankings": {
+    "title": "ランキング",
+    "users": "ユーザーランキング",
+    "quizzes": "クイズランキング",
+    "creators": "クリエイターランキング",
+    "period": {
+      "all": "全期間",
+      "month": "今月",
+      "week": "今週"
+    },
+    "rank": "{rank}位",
+    "score": "{score}ポイント",
+    "plays": "{count}回プレイ"
+  },
+  "search": {
+    "title": "クイズを検索",
+    "placeholder": "キーワードで検索...",
+    "filters": "フィルター",
+    "sortBy": "並び替え",
+    "sortOptions": {
+      "relevance": "関連度順",
+      "popular": "人気順",
+      "recent": "新着順",
+      "rating": "評価順"
+    },
+    "noResults": "検索結果がありません",
+    "tryDifferent": "別のキーワードで検索してみてください",
+    "resultsCount": "{count}件のクイズが見つかりました"
+  },
+  "profile": {
+    "title": "プロフィール",
+    "editProfile": "プロフィールを編集",
+    "displayName": "表示名",
+    "bio": "自己紹介",
+    "bioPlaceholder": "自己紹介を入力してください",
+    "joinedAt": "登録日: {date}",
+    "quizzesCreated": "作成したクイズ: {count}",
+    "quizzesTaken": "プレイしたクイズ: {count}",
+    "updateSuccess": "プロフィールを更新しました",
+    "updateError": "プロフィールの更新に失敗しました"
+  },
+  "errors": {
+    "notFound": {
+      "title": "404",
+      "message": "ページが見つかりません",
+      "description": "お探しのページは存在しないか、移動した可能性があります。",
+      "backToHome": "トップページに戻る"
+    },
+    "serverError": {
+      "title": "500",
+      "message": "サーバーエラー",
+      "description": "申し訳ございません。サーバーでエラーが発生しました。",
+      "retry": "再試行"
+    },
+    "unauthorized": "ログインが必要です",
+    "forbidden": "アクセス権限がありません",
+    "validation": "入力内容に誤りがあります",
+    "network": "ネットワークエラーが発生しました",
+    "unknown": "予期しないエラーが発生しました"
+  },
+  "footer": {
+    "copyright": "© {year} Quiz Platform. All rights reserved.",
+    "terms": "利用規約",
+    "privacy": "プライバシーポリシー",
+    "contact": "お問い合わせ"
+  }
+}

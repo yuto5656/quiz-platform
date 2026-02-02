@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 import { Providers } from "@/providers";
 import { SkipLink } from "@/components/common/skip-link";
 import {
@@ -31,13 +33,16 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="ja" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
@@ -49,10 +54,12 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background`}
       >
         <GoogleAnalytics />
-        <Providers>
-          <SkipLink />
-          <div id="main-content">{children}</div>
-        </Providers>
+        <NextIntlClientProvider messages={messages}>
+          <Providers>
+            <SkipLink />
+            <div id="main-content">{children}</div>
+          </Providers>
+        </NextIntlClientProvider>
         {/* JSON-LD structured data for SEO */}
         <script
           type="application/ld+json"

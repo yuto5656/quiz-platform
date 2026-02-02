@@ -2,13 +2,16 @@
 
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "@/components/auth/user-menu";
 import { ThemeToggle } from "@/components/common/theme-toggle";
+import { LanguageSwitcher } from "@/components/common/language-switcher";
 import { PlusCircle, Search, Trophy } from "lucide-react";
 
 export function Header() {
   const { data: session, status } = useSession();
+  const t = useTranslations("nav");
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -22,20 +25,20 @@ export function Header() {
               href="/quiz/category/general"
               className="transition-colors hover:text-foreground/80 text-foreground/60"
             >
-              カテゴリ
+              {t("categories")}
             </Link>
             <Link
               href="/search"
               className="transition-colors hover:text-foreground/80 text-foreground/60"
             >
-              検索
+              {t("search")}
             </Link>
             <Link
               href="/rankings"
               className="transition-colors hover:text-foreground/80 text-foreground/60 flex items-center gap-1"
             >
               <Trophy className="h-4 w-4" />
-              ランキング
+              {t("rankings")}
             </Link>
           </nav>
         </div>
@@ -43,9 +46,10 @@ export function Header() {
           <Button variant="ghost" size="icon" className="md:hidden" asChild>
             <Link href="/search">
               <Search className="h-5 w-5" />
-              <span className="sr-only">検索</span>
+              <span className="sr-only">{t("search")}</span>
             </Link>
           </Button>
+          <LanguageSwitcher />
           <ThemeToggle />
           {status === "loading" ? (
             <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />
@@ -54,14 +58,14 @@ export function Header() {
               <Button variant="outline" size="sm" asChild className="hidden sm:flex">
                 <Link href="/create">
                   <PlusCircle className="mr-2 h-4 w-4" />
-                  クイズ作成
+                  {t("createQuiz")}
                 </Link>
               </Button>
               <UserMenu user={session.user} />
             </>
           ) : (
             <Button asChild size="sm">
-              <Link href="/login">ログイン</Link>
+              <Link href="/login">{t("login")}</Link>
             </Button>
           )}
         </div>
