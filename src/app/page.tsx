@@ -10,68 +10,83 @@ import { ArrowRight, Sparkles, Trophy, Users } from "lucide-react";
 import { HeaderAd, InFeedAd } from "@/components/ads";
 
 async function getCategories() {
-  const categories = await prisma.category.findMany({
-    orderBy: { order: "asc" },
-    include: {
-      _count: { select: { quizzes: true } },
-    },
-  });
-  return categories.map((c) => ({
-    id: c.id,
-    name: c.name,
-    slug: c.slug,
-    description: c.description,
-    icon: c.icon,
-    quizCount: c._count.quizzes,
-  }));
+  try {
+    const categories = await prisma.category.findMany({
+      orderBy: { order: "asc" },
+      include: {
+        _count: { select: { quizzes: true } },
+      },
+    });
+    return categories.map((c) => ({
+      id: c.id,
+      name: c.name,
+      slug: c.slug,
+      description: c.description,
+      icon: c.icon,
+      quizCount: c._count.quizzes,
+    }));
+  } catch (error) {
+    console.error("Failed to fetch categories:", error);
+    return [];
+  }
 }
 
 async function getPopularQuizzes() {
-  const quizzes = await prisma.quiz.findMany({
-    where: { isPublic: true },
-    orderBy: { playCount: "desc" },
-    take: 6,
-    include: {
-      author: { select: { id: true, name: true, image: true } },
-      category: { select: { id: true, name: true, slug: true } },
-      _count: { select: { questions: true } },
-    },
-  });
-  return quizzes.map((q) => ({
-    id: q.id,
-    title: q.title,
-    description: q.description,
-    author: q.author,
-    category: q.category,
-    questionCount: q._count.questions,
-    playCount: q.playCount,
-    avgScore: q.avgScore,
-    timeLimit: q.timeLimit,
-  }));
+  try {
+    const quizzes = await prisma.quiz.findMany({
+      where: { isPublic: true },
+      orderBy: { playCount: "desc" },
+      take: 6,
+      include: {
+        author: { select: { id: true, name: true, image: true } },
+        category: { select: { id: true, name: true, slug: true } },
+        _count: { select: { questions: true } },
+      },
+    });
+    return quizzes.map((q) => ({
+      id: q.id,
+      title: q.title,
+      description: q.description,
+      author: q.author,
+      category: q.category,
+      questionCount: q._count.questions,
+      playCount: q.playCount,
+      avgScore: q.avgScore,
+      timeLimit: q.timeLimit,
+    }));
+  } catch (error) {
+    console.error("Failed to fetch popular quizzes:", error);
+    return [];
+  }
 }
 
 async function getNewestQuizzes() {
-  const quizzes = await prisma.quiz.findMany({
-    where: { isPublic: true },
-    orderBy: { createdAt: "desc" },
-    take: 6,
-    include: {
-      author: { select: { id: true, name: true, image: true } },
-      category: { select: { id: true, name: true, slug: true } },
-      _count: { select: { questions: true } },
-    },
-  });
-  return quizzes.map((q) => ({
-    id: q.id,
-    title: q.title,
-    description: q.description,
-    author: q.author,
-    category: q.category,
-    questionCount: q._count.questions,
-    playCount: q.playCount,
-    avgScore: q.avgScore,
-    timeLimit: q.timeLimit,
-  }));
+  try {
+    const quizzes = await prisma.quiz.findMany({
+      where: { isPublic: true },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+      include: {
+        author: { select: { id: true, name: true, image: true } },
+        category: { select: { id: true, name: true, slug: true } },
+        _count: { select: { questions: true } },
+      },
+    });
+    return quizzes.map((q) => ({
+      id: q.id,
+      title: q.title,
+      description: q.description,
+      author: q.author,
+      category: q.category,
+      questionCount: q._count.questions,
+      playCount: q.playCount,
+      avgScore: q.avgScore,
+      timeLimit: q.timeLimit,
+    }));
+  } catch (error) {
+    console.error("Failed to fetch newest quizzes:", error);
+    return [];
+  }
 }
 
 export default async function HomePage() {
