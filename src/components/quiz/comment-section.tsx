@@ -54,9 +54,11 @@ interface Comment {
 interface CommentSectionProps {
   quizId: string;
   quizAuthorId: string;
+  questionId?: string; // 問題ごとのコメント用
+  compact?: boolean; // 一問一答モード用のコンパクト表示
 }
 
-export function CommentSection({ quizId, quizAuthorId }: CommentSectionProps) {
+export function CommentSection({ quizId, quizAuthorId, questionId, compact = false }: CommentSectionProps) {
   const { data: session } = useSession();
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -69,11 +71,15 @@ export function CommentSection({ quizId, quizAuthorId }: CommentSectionProps) {
 
   useEffect(() => {
     fetchComments();
-  }, [quizId]);
+  }, [quizId, questionId]);
 
   const fetchComments = async () => {
     try {
-      const res = await fetch(`/api/comments?quizId=${quizId}`);
+      const params = new URLSearchParams({ quizId });
+      if (questionId) {
+        params.append("questionId", questionId);
+      }
+      const res = await fetch(`/api/comments?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch comments");
       const data = await res.json();
       setComments(data.comments);
@@ -97,7 +103,7 @@ export function CommentSection({ quizId, quizAuthorId }: CommentSectionProps) {
       const res = await fetch("/api/comments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quizId, content }),
+        body: JSON.stringify({ quizId, questionId, content }),
       });
 
       if (!res.ok) throw new Error("Failed to post comment");
@@ -124,7 +130,7 @@ export function CommentSection({ quizId, quizAuthorId }: CommentSectionProps) {
       const res = await fetch("/api/comments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quizId, content: replyContent, parentId }),
+        body: JSON.stringify({ quizId, questionId, content: replyContent, parentId }),
       });
 
       if (!res.ok) throw new Error("Failed to post reply");
@@ -372,14 +378,14 @@ export function CommentSection({ quizId, quizAuthorId }: CommentSectionProps) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MessageSquare className="h-5 w-5" />
-          コメント ({comments.length})
+    <Card className={compact ? "border-0 shadow-none bg-muted/30" : ""}>
+      <CardHeader className={compact ? "pb-2 px-4" : ""}>
+        <CardTitle className={`flex items-center gap-2 ${compact ? "text-base" : ""}`}>
+          <MessageSquare className={compact ? "h-4 w-4" : "h-5 w-5"} />
+          {questionId ? "この問題へのコメント" : "コメント"} ({comments.length})
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className={compact ? "px-4 pt-0" : ""}>
         {/* Comment form */}
         {session?.user ? (
           <form onSubmit={handleSubmit} className="mb-6">

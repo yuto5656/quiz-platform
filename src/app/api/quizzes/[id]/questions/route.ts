@@ -50,6 +50,7 @@ export async function GET(
       title: quiz.title,
       timeLimit: quiz.timeLimit,
       questions: quiz.questions,
+      authorId: quiz.authorId,
     });
   } catch (error) {
     console.error("Failed to fetch questions:", error);

@@ -183,6 +183,7 @@ model Question {
   createdAt DateTime @default(now())
 
   answerHistories AnswerHistory[]
+  comments        Comment[]
 
   @@index([quizId])
 }
@@ -281,6 +282,10 @@ model Comment {
   userId  String
   user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // 問題ごとのコメント（任意、nullの場合はクイズ全体へのコメント）
+  questionId String?
+  question   Question? @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
   content String @db.Text
 
   // 返信用（スレッド）
@@ -293,6 +298,7 @@ model Comment {
 
   @@index([quizId])
   @@index([userId])
+  @@index([questionId])
   @@index([parentId])
   @@index([createdAt(sort: Desc)])
 }

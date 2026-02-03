@@ -20,6 +20,7 @@ import {
   PlayCircle,
   XCircle,
 } from "lucide-react";
+import { CommentSection } from "@/components/quiz/comment-section";
 
 interface Question {
   id: string;
@@ -38,6 +39,7 @@ interface QuizData {
   title: string;
   timeLimit: number | null;
   questions: Question[];
+  authorId: string;
 }
 
 type PlayMode = "select" | "standard" | "one-by-one";
@@ -545,6 +547,18 @@ export default function QuizPlayPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Question Comment Section - 解答後に表示 */}
+          {showAnswer && (
+            <div className="mb-6">
+              <CommentSection
+                quizId={quizData.quizId}
+                quizAuthorId={quizData.authorId}
+                questionId={currentQuestion.id}
+                compact
+              />
+            </div>
+          )}
 
           {/* Navigation */}
           <div className="flex items-center justify-between">

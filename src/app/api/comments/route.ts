@@ -5,6 +5,7 @@ import { z } from "zod";
 
 const createCommentSchema = z.object({
   quizId: z.string().min(1),
+  questionId: z.string().optional(), // 問題ごとのコメント用（任意）
   content: z.string().min(1).max(2000),
   parentId: z.string().optional(),
 });
@@ -19,21 +20,36 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const data = createCommentSchema.parse(body);
 
-    // Verify quiz exists and is published
+    // Verify quiz exists (status check removed - if user can access play page, they can comment)
     const quiz = await prisma.quiz.findUnique({
       where: { id: data.quizId },
-      select: { status: true, isPublic: true },
+      select: { id: true },
     });
 
-    if (!quiz || quiz.status !== "published") {
+    if (!quiz) {
       return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
+    }
+
+    // Verify question exists if provided
+    if (data.questionId) {
+      const question = await prisma.question.findFirst({
+        where: { id: data.questionId, quizId: data.quizId },
+        select: { id: true },
+      });
+
+      if (!question) {
+        return NextResponse.json(
+          { error: "Question not found" },
+          { status: 404 }
+        );
+      }
     }
 
     // Verify parent comment exists if provided
     if (data.parentId) {
       const parentComment = await prisma.comment.findUnique({
         where: { id: data.parentId },
-        select: { quizId: true },
+        select: { quizId: true, questionId: true },
       });
 
       if (!parentComment || parentComment.quizId !== data.quizId) {
@@ -42,11 +58,17 @@ export async function POST(request: NextRequest) {
           { status: 404 }
         );
       }
+
+      // If replying to a question comment, inherit the questionId
+      if (parentComment.questionId && !data.questionId) {
+        data.questionId = parentComment.questionId;
+      }
     }
 
     const comment = await prisma.comment.create({
       data: {
         quizId: data.quizId,
+        questionId: data.questionId || null,
         userId: session.user.id,
         content: data.content,
         parentId: data.parentId || null,
@@ -63,6 +85,7 @@ export async function POST(request: NextRequest) {
         id: comment.id,
         content: comment.content,
         user: comment.user,
+        questionId: comment.questionId,
         parentId: comment.parentId,
         createdAt: comment.createdAt.toISOString(),
         updatedAt: comment.updatedAt.toISOString(),
@@ -87,6 +110,7 @@ export async function POST(request: NextRequest) {
 
 const querySchema = z.object({
   quizId: z.string().min(1),
+  questionId: z.string().optional(), // 問題ごとのコメント取得用
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(50).default(20),
 });
@@ -94,29 +118,36 @@ const querySchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    const questionIdParam = searchParams.get("questionId");
     const params = querySchema.parse({
       quizId: searchParams.get("quizId") || "",
+      questionId: questionIdParam && questionIdParam.length > 0 ? questionIdParam : undefined,
       page: searchParams.get("page") || 1,
       limit: searchParams.get("limit") || 20,
     });
 
-    // Verify quiz exists
+    // Verify quiz exists (status check removed - if user can access play page, they can see comments)
     const quiz = await prisma.quiz.findUnique({
       where: { id: params.quizId },
-      select: { status: true },
+      select: { id: true },
     });
 
-    if (!quiz || quiz.status !== "published") {
+    if (!quiz) {
       return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
     }
+
+    // Build where clause for filtering
+    const whereClause = {
+      quizId: params.quizId,
+      parentId: null, // Only top-level comments
+      // questionId filter: if provided, filter by questionId; if not, get quiz-level comments (questionId is null)
+      questionId: params.questionId || null,
+    };
 
     // Get top-level comments with replies
     const [comments, totalCount] = await Promise.all([
       prisma.comment.findMany({
-        where: {
-          quizId: params.quizId,
-          parentId: null, // Only top-level comments
-        },
+        where: whereClause,
         orderBy: { createdAt: "desc" },
         skip: (params.page - 1) * params.limit,
         take: params.limit,
@@ -135,10 +166,7 @@ export async function GET(request: NextRequest) {
         },
       }),
       prisma.comment.count({
-        where: {
-          quizId: params.quizId,
-          parentId: null,
-        },
+        where: whereClause,
       }),
     ]);
 
@@ -146,6 +174,7 @@ export async function GET(request: NextRequest) {
       id: c.id,
       content: c.content,
       user: c.user,
+      questionId: c.questionId,
       parentId: c.parentId,
       createdAt: c.createdAt.toISOString(),
       updatedAt: c.updatedAt.toISOString(),
@@ -153,6 +182,7 @@ export async function GET(request: NextRequest) {
         id: r.id,
         content: r.content,
         user: r.user,
+        questionId: r.questionId,
         parentId: r.parentId,
         createdAt: r.createdAt.toISOString(),
         updatedAt: r.updatedAt.toISOString(),
