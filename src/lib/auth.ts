@@ -35,6 +35,41 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return session;
     },
+    async signIn({ user, account }) {
+      // 同じメールアドレスのアカウントを自動的にリンク
+      if (!user.email || !account) return true;
+
+      const existingUser = await prisma.user.findUnique({
+        where: { email: user.email },
+      });
+
+      if (existingUser) {
+        // 既存ユーザーにこのOAuthアカウントをリンク
+        const existingAccount = await prisma.account.findFirst({
+          where: {
+            userId: existingUser.id,
+            provider: account.provider,
+          },
+        });
+
+        if (!existingAccount) {
+          await prisma.account.create({
+            data: {
+              userId: existingUser.id,
+              type: account.type,
+              provider: account.provider,
+              providerAccountId: account.providerAccountId,
+              access_token: account.access_token,
+              token_type: account.token_type,
+              scope: account.scope,
+              id_token: account.id_token,
+            },
+          });
+        }
+      }
+
+      return true;
+    },
   },
   pages: {
     signIn: "/login",
