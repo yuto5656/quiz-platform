@@ -6,3 +6,4 @@ export {
   ResultAd,
   type AdSize,
 } from "./ad-container";
+export { AdSenseScript } from "./adsense-script";

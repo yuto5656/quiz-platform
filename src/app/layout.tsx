@@ -10,6 +10,7 @@ import {
   generateOrganizationJsonLd,
 } from "@/lib/seo";
 import { GoogleAnalytics } from "@/components/analytics";
+import { AdSenseScript } from "@/components/ads";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -54,6 +55,7 @@ export default async function RootLayout({
         suppressHydrationWarning
       >
         <GoogleAnalytics />
+        <AdSenseScript />
         <NextIntlClientProvider locale={locale} messages={messages}>
           <Providers>
             <SkipLink />

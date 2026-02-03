@@ -36,7 +36,23 @@ const nextConfig: NextConfig = {
       {
         // Apply security headers to all routes
         source: "/:path*",
-        headers: securityHeaders,
+        headers: [
+          ...securityHeaders,
+          // Hide server technology information
+          {
+            key: "Server",
+            value: "Web Server",
+          },
+          // Remove Vercel-specific headers
+          {
+            key: "x-vercel-id",
+            value: "",
+          },
+          {
+            key: "x-vercel-cache",
+            value: "",
+          },
+        ],
       },
     ];
   },
