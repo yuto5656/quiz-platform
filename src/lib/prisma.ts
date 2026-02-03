@@ -7,11 +7,20 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient() {
+  const connectionString = process.env.DATABASE_URL;
+
+  if (!connectionString) {
+    throw new Error("DATABASE_URL environment variable is not set");
+  }
+
   const pool = new pg.Pool({
-    connectionString: process.env.DATABASE_URL,
-    max: 10,
-    idleTimeoutMillis: 30000,
+    connectionString,
+    max: 1,
+    idleTimeoutMillis: 20000,
     connectionTimeoutMillis: 10000,
+    ssl: {
+      rejectUnauthorized: false,
+    },
   });
 
   pool.on("error", (err) => {
