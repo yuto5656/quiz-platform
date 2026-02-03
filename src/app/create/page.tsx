@@ -33,6 +33,7 @@ import {
   ChevronUp,
   ChevronDown,
   Save,
+  FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -173,7 +174,51 @@ export default function CreateQuizPage() {
     setQuestions(newQuestions);
   };
 
-  const handleSubmit = async () => {
+  const handleSaveDraft = async () => {
+    if (!title.trim()) {
+      toast.error("タイトルを入力してください");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const res = await fetch("/api/quizzes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          description,
+          categoryId: categoryId || undefined,
+          timeLimit,
+          passingScore,
+          status: "draft",
+          questions: questions.map((q) => ({
+            content: q.content,
+            options: q.options,
+            correctIndices: q.correctIndices,
+            isMultipleChoice: q.isMultipleChoice,
+            explanation: q.explanation || undefined,
+            points: q.points,
+          })),
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to save draft");
+      }
+
+      const quiz = await res.json();
+      toast.success("下書きを保存しました");
+      router.push(`/edit/${quiz.id}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "下書きの保存に失敗しました");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePublish = async () => {
     if (!title.trim()) {
       toast.error("タイトルを入力してください");
       return;
@@ -186,8 +231,8 @@ export default function CreateQuizPage() {
       toast.error("すべての問題文を入力してください");
       return;
     }
-    if (questions.some((q) => q.options.some((o) => !o.trim()))) {
-      toast.error("すべての選択肢を入力してください");
+    if (questions.some((q) => q.options.filter((o) => o.trim()).length < 2)) {
+      toast.error("各問題に最低2つの選択肢が必要です");
       return;
     }
     // Validate correctIndices are within range
@@ -210,6 +255,7 @@ export default function CreateQuizPage() {
           categoryId,
           timeLimit,
           passingScore,
+          status: "published",
           questions: questions.map((q) => ({
             content: q.content,
             options: q.options.filter((o) => o.trim()),
@@ -238,7 +284,7 @@ export default function CreateQuizPage() {
       }
 
       const quiz = await res.json();
-      toast.success("クイズを作成しました！");
+      toast.success("クイズを公開しました！");
       router.push(`/quiz/${quiz.id}`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "クイズの作成に失敗しました");
@@ -529,7 +575,7 @@ export default function CreateQuizPage() {
             <div className="space-y-6">
               <Card className="sticky top-20">
                 <CardHeader>
-                  <CardTitle>公開設定</CardTitle>
+                  <CardTitle>保存・公開</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="text-sm text-muted-foreground space-y-1">
@@ -538,18 +584,36 @@ export default function CreateQuizPage() {
                       合計点: {questions.reduce((sum, q) => sum + q.points, 0)}点
                     </p>
                   </div>
-                  <Button
-                    className="w-full"
-                    onClick={handleSubmit}
-                    disabled={isSaving}
-                  >
-                    {isSaving ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Save className="mr-2 h-4 w-4" />
-                    )}
-                    クイズを公開
-                  </Button>
+                  <div className="space-y-2">
+                    <Button
+                      className="w-full"
+                      onClick={handlePublish}
+                      disabled={isSaving}
+                    >
+                      {isSaving ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="mr-2 h-4 w-4" />
+                      )}
+                      クイズを公開
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={handleSaveDraft}
+                      disabled={isSaving}
+                    >
+                      {isSaving ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <FileText className="mr-2 h-4 w-4" />
+                      )}
+                      下書き保存
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    下書きは自分だけが閲覧・編集できます
+                  </p>
                 </CardContent>
               </Card>
             </div>

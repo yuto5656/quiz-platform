@@ -54,7 +54,7 @@ export async function GET() {
       recentQuizzes: recentQuizzes.map((q) => ({
         id: q.id,
         title: q.title,
-        category: q.category.name,
+        category: q.category?.name ?? null,
         questionCount: q._count.questions,
         playCount: q.playCount,
         createdAt: q.createdAt.toISOString(),

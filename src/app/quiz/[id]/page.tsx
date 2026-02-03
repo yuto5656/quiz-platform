@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { SidebarAd, InFeedAd } from "@/components/ads";
 import { ShareButton } from "@/components/common/share-button";
+import { CommentSection } from "@/components/quiz/comment-section";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -114,7 +115,7 @@ export default async function QuizDetailPage({ params }: Props) {
             <div className="lg:col-span-2 space-y-6">
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <Badge variant="secondary">{quiz.category.name}</Badge>
+                  {quiz.category && <Badge variant="secondary">{quiz.category.name}</Badge>}
                   {!quiz.isPublic && <Badge variant="outline">非公開</Badge>}
                 </div>
                 <h1 className="text-3xl font-bold">{quiz.title}</h1>
@@ -194,6 +195,9 @@ export default async function QuizDetailPage({ params }: Props) {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Comment Section */}
+              <CommentSection quizId={quiz.id} quizAuthorId={quiz.authorId} />
             </div>
 
             {/* Sidebar */}

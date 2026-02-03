@@ -35,6 +35,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import {
   Plus,
   Trash2,
@@ -42,6 +43,7 @@ import {
   ChevronUp,
   ChevronDown,
   Save,
+  Send,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -65,11 +67,12 @@ interface QuizData {
   id: string;
   title: string;
   description: string | null;
-  categoryId: string;
+  categoryId: string | null;
   timeLimit: number | null;
   passingScore: number;
   isPublic: boolean;
   authorId: string;
+  status: "draft" | "published";
   questions: {
     id: string;
     content: string;
@@ -90,9 +93,11 @@ export default function EditQuizPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Quiz data
+  const [quizStatus, setQuizStatus] = useState<"draft" | "published">("draft");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [categoryId, setCategoryId] = useState("");
@@ -139,9 +144,10 @@ export default function EditQuizPage() {
 
         setTitle(quizData.title);
         setDescription(quizData.description || "");
-        setCategoryId(quizData.categoryId);
+        setCategoryId(quizData.categoryId || "");
         setTimeLimit(quizData.timeLimit);
         setPassingScore(quizData.passingScore);
+        setQuizStatus(quizData.status);
         setQuestions(
           quizData.questions.map((q) => ({
             id: q.id,
@@ -249,21 +255,71 @@ export default function EditQuizPage() {
     setQuestions(newQuestions);
   };
 
-  const handleSubmit = async () => {
+  const handleSaveDraft = async () => {
     if (!title.trim()) {
       toast.error("タイトルを入力してください");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const res = await fetch(`/api/quizzes/${quizId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          description,
+          categoryId: categoryId || undefined,
+          timeLimit,
+          passingScore,
+          status: "draft",
+          questions: questions.map((q) => ({
+            id: q.id,
+            content: q.content,
+            options: q.options,
+            correctIndices: q.correctIndices,
+            isMultipleChoice: q.isMultipleChoice,
+            explanation: q.explanation || undefined,
+            points: q.points,
+          })),
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        console.error("Draft save error:", error);
+        throw new Error(error.error || "Failed to save draft");
+      }
+
+      toast.success("下書きを保存しました");
+      setQuizStatus("draft");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "下書きの保存に失敗しました");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePublish = async () => {
+    // Strict validation for publishing
+    if (!title.trim() || title.length < 3) {
+      toast.error("タイトルは3文字以上で入力してください");
       return;
     }
     if (!categoryId) {
       toast.error("カテゴリを選択してください");
       return;
     }
+    if (questions.length === 0) {
+      toast.error("最低1つの問題を追加してください");
+      return;
+    }
     if (questions.some((q) => !q.content.trim())) {
       toast.error("すべての問題文を入力してください");
       return;
     }
-    if (questions.some((q) => q.options.some((o) => !o.trim()))) {
-      toast.error("すべての選択肢を入力してください");
+    if (questions.some((q) => q.options.filter((o) => o.trim()).length < 2)) {
+      toast.error("各問題には最低2つの選択肢が必要です");
       return;
     }
     // Validate correctIndices are within range
@@ -275,7 +331,7 @@ export default function EditQuizPage() {
       }
     }
 
-    setIsSaving(true);
+    setIsPublishing(true);
     try {
       const res = await fetch(`/api/quizzes/${quizId}`, {
         method: "PUT",
@@ -286,6 +342,7 @@ export default function EditQuizPage() {
           categoryId,
           timeLimit,
           passingScore,
+          status: "published",
           questions: questions.map((q) => ({
             id: q.id,
             content: q.content,
@@ -300,19 +357,20 @@ export default function EditQuizPage() {
 
       if (!res.ok) {
         const error = await res.json();
-        console.error("Quiz update error:", error);
+        console.error("Publish error:", error);
         if (error.details) {
           console.error("Validation details:", error.details);
         }
-        throw new Error(error.error || "Failed to update quiz");
+        throw new Error(error.error || "Failed to publish quiz");
       }
 
-      toast.success("クイズを更新しました！");
+      toast.success("クイズを公開しました！");
+      setQuizStatus("published");
       router.push(`/quiz/${quizId}`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "クイズの更新に失敗しました");
+      toast.error(error instanceof Error ? error.message : "クイズの公開に失敗しました");
     } finally {
-      setIsSaving(false);
+      setIsPublishing(false);
     }
   };
 
@@ -619,7 +677,12 @@ export default function EditQuizPage() {
             <div className="space-y-6">
               <Card className="sticky top-20">
                 <CardHeader>
-                  <CardTitle>設定</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>設定</CardTitle>
+                    <Badge variant={quizStatus === "draft" ? "secondary" : "default"}>
+                      {quizStatus === "draft" ? "下書き" : "公開中"}
+                    </Badge>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="text-sm text-muted-foreground space-y-1">
@@ -628,17 +691,34 @@ export default function EditQuizPage() {
                       合計点: {questions.reduce((sum, q) => sum + q.points, 0)}点
                     </p>
                   </div>
+
+                  {/* Draft Save Button */}
                   <Button
+                    variant="outline"
                     className="w-full"
-                    onClick={handleSubmit}
-                    disabled={isSaving}
+                    onClick={handleSaveDraft}
+                    disabled={isSaving || isPublishing}
                   >
                     {isSaving ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
                       <Save className="mr-2 h-4 w-4" />
                     )}
-                    変更を保存
+                    下書きを保存
+                  </Button>
+
+                  {/* Publish Button */}
+                  <Button
+                    className="w-full"
+                    onClick={handlePublish}
+                    disabled={isSaving || isPublishing}
+                  >
+                    {isPublishing ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="mr-2 h-4 w-4" />
+                    )}
+                    {quizStatus === "draft" ? "公開する" : "更新して公開"}
                   </Button>
 
                   <AlertDialog>

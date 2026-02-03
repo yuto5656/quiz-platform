@@ -283,11 +283,18 @@ describe("PUT /api/quizzes/[id]", () => {
 
   it("should validate update data", async () => {
     setAuthenticated();
-    mockPrisma.quiz.findUnique.mockResolvedValue({ authorId: "user-123" });
+    mockPrisma.quiz.findUnique
+      .mockResolvedValueOnce({ authorId: "user-123" })  // First call for auth check
+      .mockResolvedValueOnce({ status: "draft" });      // Second call for status check
 
     const request = createRequest("/api/quizzes/quiz-123", {
       method: "PUT",
-      body: JSON.stringify({ title: "ab" }), // Too short
+      body: JSON.stringify({
+        title: "ab", // Too short for publishing
+        status: "published",
+        categoryId: "cat-123",
+        questions: [], // Empty - needs at least 1 question for publishing
+      }),
     });
     const response = await PUT(request, createParams("quiz-123"));
     const data = await response.json();
@@ -354,9 +361,9 @@ describe("DELETE /api/quizzes/[id]", () => {
     expect(data.error).toBe("Forbidden");
   });
 
-  it("should delete quiz and decrement user's quizzesCreated", async () => {
+  it("should delete quiz and decrement user's quizzesCreated for published quiz", async () => {
     setAuthenticated();
-    mockPrisma.quiz.findUnique.mockResolvedValue({ authorId: "user-123" });
+    mockPrisma.quiz.findUnique.mockResolvedValue({ authorId: "user-123", status: "published" });
     mockPrisma.quiz.delete.mockResolvedValue({});
     mockPrisma.user.update.mockResolvedValue({});
 
@@ -377,9 +384,26 @@ describe("DELETE /api/quizzes/[id]", () => {
     );
   });
 
+  it("should delete draft quiz without decrementing quizzesCreated", async () => {
+    setAuthenticated();
+    mockPrisma.quiz.findUnique.mockResolvedValue({ authorId: "user-123", status: "draft" });
+    mockPrisma.quiz.delete.mockResolvedValue({});
+
+    const request = createRequest("/api/quizzes/quiz-123", { method: "DELETE" });
+    const response = await DELETE(request, createParams("quiz-123"));
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(mockPrisma.quiz.delete).toHaveBeenCalledWith({
+      where: { id: "quiz-123" },
+    });
+    expect(mockPrisma.user.update).not.toHaveBeenCalled();
+  });
+
   it("should handle database errors gracefully", async () => {
     setAuthenticated();
-    mockPrisma.quiz.findUnique.mockResolvedValue({ authorId: "user-123" });
+    mockPrisma.quiz.findUnique.mockResolvedValue({ authorId: "user-123", status: "published" });
     mockPrisma.quiz.delete.mockRejectedValue(new Error("Database error"));
 
     const request = createRequest("/api/quizzes/quiz-123", { method: "DELETE" });

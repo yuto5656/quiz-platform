@@ -46,7 +46,7 @@ export interface QuizMetadataInput {
   id: string;
   title: string;
   description: string | null;
-  category: { name: string };
+  category: { name: string } | null;
   questionCount: number;
   playCount: number;
 }
@@ -69,7 +69,7 @@ export interface QuizJsonLdInput {
   id: string;
   title: string;
   description: string | null;
-  category: { name: string };
+  category: { name: string } | null;
   author: { name: string | null };
   questionCount: number;
   createdAt: Date;
@@ -188,9 +188,10 @@ export function generateDefaultMetadata(): Metadata {
  */
 export function generateQuizMetadata(quiz: QuizMetadataInput): Metadata {
   const title = quiz.title;
+  const categoryName = quiz.category?.name ?? "その他";
   const rawDescription =
     quiz.description ||
-    `${quiz.category.name}の${quiz.title}に挑戦しよう！全${quiz.questionCount}問、${quiz.playCount}人がプレイ中。`;
+    `${categoryName}の${quiz.title}に挑戦しよう！全${quiz.questionCount}問、${quiz.playCount}人がプレイ中。`;
   const description = truncateDescription(rawDescription);
   const url = urlHelpers.quiz(quiz.id);
 
@@ -199,7 +200,7 @@ export function generateQuizMetadata(quiz: QuizMetadataInput): Metadata {
     description,
     keywords: [
       quiz.title,
-      quiz.category.name,
+      categoryName,
       "クイズ",
       "問題",
       "試験対策",
@@ -312,14 +313,15 @@ export function generateUserMetadata(user: UserMetadataInput): Metadata {
  * JSON-LD構造化データ: クイズ用
  */
 export function generateQuizJsonLd(quiz: QuizJsonLdInput): QuizJsonLd {
+  const categoryName = quiz.category?.name ?? "その他";
   return {
     "@context": "https://schema.org",
     "@type": "Quiz",
     name: quiz.title,
-    description: quiz.description || `${quiz.category.name}のクイズ`,
+    description: quiz.description || `${categoryName}のクイズ`,
     about: {
       "@type": "Thing",
-      name: quiz.category.name,
+      name: categoryName,
     },
     author: {
       "@type": "Person",

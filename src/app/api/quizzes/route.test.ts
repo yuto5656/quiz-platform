@@ -266,6 +266,7 @@ describe("POST /api/quizzes", () => {
     isPublic: true,
     timeLimit: 600,
     passingScore: 60,
+    status: "published" as const,
     questions: [
       {
         content: "What is 2 + 2?",
@@ -318,6 +319,7 @@ describe("POST /api/quizzes", () => {
     const invalidData = {
       title: "", // Too short
       categoryId: "cat-123",
+      status: "published" as const,
       questions: [],
     };
 
@@ -339,6 +341,7 @@ describe("POST /api/quizzes", () => {
 
     const invalidData = {
       ...validQuizData,
+      status: "published" as const,
       questions: [
         {
           content: "Question?",

@@ -24,7 +24,7 @@ interface QuizCardProps {
       id: string;
       name: string;
       slug: string;
-    };
+    } | null;
     questionCount: number;
     playCount: number;
     avgScore: number | null;
@@ -46,9 +46,11 @@ export function QuizCard({ quiz, showAuthor = true }: QuizCardProps) {
       <Card className="h-full transition-colors hover:bg-muted/50">
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
-            <Badge variant="secondary" className="mb-2">
-              {quiz.category.name}
-            </Badge>
+            {quiz.category && (
+              <Badge variant="secondary" className="mb-2">
+                {quiz.category.name}
+              </Badge>
+            )}
             {quiz.timeLimit && (
               <div className="flex items-center text-xs text-muted-foreground">
                 <Clock className="mr-1 h-3 w-3" />
