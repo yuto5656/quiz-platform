@@ -15,47 +15,57 @@ interface CategoryPageProps {
 }
 
 async function getCategory(slug: string) {
-  const category = await prisma.category.findUnique({
-    where: { slug },
-  });
-  return category;
+  try {
+    const category = await prisma.category.findUnique({
+      where: { slug },
+    });
+    return category;
+  } catch (error) {
+    console.error("Failed to fetch category:", error);
+    return null;
+  }
 }
 
 async function getQuizzes(categoryId: string, page: number = 1, perPage: number = 12) {
-  const skip = (page - 1) * perPage;
+  try {
+    const skip = (page - 1) * perPage;
 
-  const [quizzes, total] = await Promise.all([
-    prisma.quiz.findMany({
-      where: { categoryId, isPublic: true },
-      orderBy: { createdAt: "desc" },
-      skip,
-      take: perPage,
-      include: {
-        author: { select: { id: true, name: true, image: true } },
-        category: { select: { id: true, name: true, slug: true } },
-        _count: { select: { questions: true } },
-      },
-    }),
-    prisma.quiz.count({
-      where: { categoryId, isPublic: true },
-    }),
-  ]);
+    const [quizzes, total] = await Promise.all([
+      prisma.quiz.findMany({
+        where: { categoryId, isPublic: true },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: perPage,
+        include: {
+          author: { select: { id: true, name: true, image: true } },
+          category: { select: { id: true, name: true, slug: true } },
+          _count: { select: { questions: true } },
+        },
+      }),
+      prisma.quiz.count({
+        where: { categoryId, isPublic: true },
+      }),
+    ]);
 
-  return {
-    quizzes: quizzes.map((q) => ({
-      id: q.id,
-      title: q.title,
-      description: q.description,
-      author: q.author,
-      category: q.category,
-      questionCount: q._count.questions,
-      playCount: q.playCount,
-      avgScore: q.avgScore,
-      timeLimit: q.timeLimit,
-    })),
-    total,
-    totalPages: Math.ceil(total / perPage),
-  };
+    return {
+      quizzes: quizzes.map((q) => ({
+        id: q.id,
+        title: q.title,
+        description: q.description,
+        author: q.author,
+        category: q.category,
+        questionCount: q._count.questions,
+        playCount: q.playCount,
+        avgScore: q.avgScore,
+        timeLimit: q.timeLimit,
+      })),
+      total,
+      totalPages: Math.ceil(total / perPage),
+    };
+  } catch (error) {
+    console.error("Failed to fetch quizzes:", error);
+    return { quizzes: [], total: 0, totalPages: 0 };
+  }
 }
 
 export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
@@ -154,22 +164,27 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 }
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const category = await prisma.category.findUnique({
-    where: { slug },
-    include: {
-      _count: { select: { quizzes: { where: { isPublic: true } } } },
-    },
-  });
+  try {
+    const { slug } = await params;
+    const category = await prisma.category.findUnique({
+      where: { slug },
+      include: {
+        _count: { select: { quizzes: { where: { isPublic: true } } } },
+      },
+    });
 
-  if (!category) {
-    return { title: "カテゴリが見つかりません" };
+    if (!category) {
+      return { title: "カテゴリが見つかりません" };
+    }
+
+    return generateCategoryMetadata({
+      name: category.name,
+      slug: category.slug,
+      description: category.description,
+      quizCount: category._count.quizzes,
+    });
+  } catch (error) {
+    console.error("Failed to generate metadata:", error);
+    return { title: "カテゴリ" };
   }
-
-  return generateCategoryMetadata({
-    name: category.name,
-    slug: category.slug,
-    description: category.description,
-    quizCount: category._count.quizzes,
-  });
 }

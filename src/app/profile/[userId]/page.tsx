@@ -26,48 +26,53 @@ interface ProfilePageProps {
 }
 
 async function getUserProfile(userId: string) {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      name: true,
-      image: true,
-      displayName: true,
-      bio: true,
-      totalScore: true,
-      quizzesTaken: true,
-      quizzesCreated: true,
-      createdAt: true,
-    },
-  });
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        image: true,
+        displayName: true,
+        bio: true,
+        totalScore: true,
+        quizzesTaken: true,
+        quizzesCreated: true,
+        createdAt: true,
+      },
+    });
 
-  if (!user) return null;
+    if (!user) return null;
 
-  const quizzes = await prisma.quiz.findMany({
-    where: { authorId: userId, isPublic: true },
-    orderBy: { createdAt: "desc" },
-    take: 6,
-    include: {
-      author: { select: { id: true, name: true, image: true } },
-      category: { select: { id: true, name: true, slug: true } },
-      _count: { select: { questions: true } },
-    },
-  });
+    const quizzes = await prisma.quiz.findMany({
+      where: { authorId: userId, isPublic: true },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+      include: {
+        author: { select: { id: true, name: true, image: true } },
+        category: { select: { id: true, name: true, slug: true } },
+        _count: { select: { questions: true } },
+      },
+    });
 
-  return {
-    user,
-    quizzes: quizzes.map((q) => ({
-      id: q.id,
-      title: q.title,
-      description: q.description,
-      author: q.author,
-      category: q.category,
-      questionCount: q._count.questions,
-      playCount: q.playCount,
-      avgScore: q.avgScore,
-      timeLimit: q.timeLimit,
-    })),
-  };
+    return {
+      user,
+      quizzes: quizzes.map((q) => ({
+        id: q.id,
+        title: q.title,
+        description: q.description,
+        author: q.author,
+        category: q.category,
+        questionCount: q._count.questions,
+        playCount: q.playCount,
+        avgScore: q.avgScore,
+        timeLimit: q.timeLimit,
+      })),
+    };
+  } catch (error) {
+    console.error("Failed to fetch user profile:", error);
+    return null;
+  }
 }
 
 export default async function UserProfilePage({ params }: ProfilePageProps) {

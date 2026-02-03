@@ -33,46 +33,56 @@ interface Props {
 
 // 動的メタデータを生成
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
-  const quiz = await prisma.quiz.findUnique({
-    where: { id, isPublic: true },
-    include: {
-      category: { select: { name: true } },
-      _count: { select: { questions: true } },
-    },
-  });
+  try {
+    const { id } = await params;
+    const quiz = await prisma.quiz.findUnique({
+      where: { id, isPublic: true },
+      include: {
+        category: { select: { name: true } },
+        _count: { select: { questions: true } },
+      },
+    });
 
-  if (!quiz) {
-    return { title: "クイズが見つかりません" };
+    if (!quiz) {
+      return { title: "クイズが見つかりません" };
+    }
+
+    return generateQuizMetadata({
+      id: quiz.id,
+      title: quiz.title,
+      description: quiz.description,
+      category: quiz.category,
+      questionCount: quiz._count.questions,
+      playCount: quiz.playCount,
+    });
+  } catch (error) {
+    console.error("Failed to generate quiz metadata:", error);
+    return { title: "クイズ" };
   }
-
-  return generateQuizMetadata({
-    id: quiz.id,
-    title: quiz.title,
-    description: quiz.description,
-    category: quiz.category,
-    questionCount: quiz._count.questions,
-    playCount: quiz.playCount,
-  });
 }
 
 async function getQuiz(id: string) {
-  const quiz = await prisma.quiz.findUnique({
-    where: { id },
-    include: {
-      author: {
-        select: { id: true, name: true, image: true, bio: true },
+  try {
+    const quiz = await prisma.quiz.findUnique({
+      where: { id },
+      include: {
+        author: {
+          select: { id: true, name: true, image: true, bio: true },
+        },
+        category: {
+          select: { id: true, name: true, slug: true },
+        },
+        _count: {
+          select: { questions: true },
+        },
       },
-      category: {
-        select: { id: true, name: true, slug: true },
-      },
-      _count: {
-        select: { questions: true },
-      },
-    },
-  });
+    });
 
-  return quiz;
+    return quiz;
+  } catch (error) {
+    console.error("Failed to fetch quiz:", error);
+    return null;
+  }
 }
 
 export default async function QuizDetailPage({ params }: Props) {

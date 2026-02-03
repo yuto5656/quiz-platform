@@ -48,50 +48,55 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // カテゴリページ
-  const categories = await prisma.category.findMany({
-    select: { slug: true, createdAt: true },
-  });
+  try {
+    // カテゴリページ
+    const categories = await prisma.category.findMany({
+      select: { slug: true, createdAt: true },
+    });
 
-  const categoryPages: MetadataRoute.Sitemap = categories.map((category) => ({
-    url: `${baseUrl}/quiz/category/${category.slug}`,
-    lastModified: category.createdAt,
-    changeFrequency: "daily",
-    priority: 0.8,
-  }));
+    const categoryPages: MetadataRoute.Sitemap = categories.map((category) => ({
+      url: `${baseUrl}/quiz/category/${category.slug}`,
+      lastModified: category.createdAt,
+      changeFrequency: "daily",
+      priority: 0.8,
+    }));
 
-  // 公開クイズページ
-  const quizzes = await prisma.quiz.findMany({
-    where: { isPublic: true },
-    select: { id: true, updatedAt: true },
-    orderBy: { updatedAt: "desc" },
-    take: 5000, // 最大5000件（サイトマップの推奨上限）
-  });
+    // 公開クイズページ
+    const quizzes = await prisma.quiz.findMany({
+      where: { isPublic: true },
+      select: { id: true, updatedAt: true },
+      orderBy: { updatedAt: "desc" },
+      take: 5000, // 最大5000件（サイトマップの推奨上限）
+    });
 
-  const quizPages: MetadataRoute.Sitemap = quizzes.map((quiz) => ({
-    url: `${baseUrl}/quiz/${quiz.id}`,
-    lastModified: quiz.updatedAt,
-    changeFrequency: "weekly",
-    priority: 0.7,
-  }));
+    const quizPages: MetadataRoute.Sitemap = quizzes.map((quiz) => ({
+      url: `${baseUrl}/quiz/${quiz.id}`,
+      lastModified: quiz.updatedAt,
+      changeFrequency: "weekly",
+      priority: 0.7,
+    }));
 
-  // ユーザープロフィールページ（公開クイズを持つユーザーのみ）
-  const usersWithQuizzes = await prisma.user.findMany({
-    where: {
-      quizzes: {
-        some: { isPublic: true },
+    // ユーザープロフィールページ（公開クイズを持つユーザーのみ）
+    const usersWithQuizzes = await prisma.user.findMany({
+      where: {
+        quizzes: {
+          some: { isPublic: true },
+        },
       },
-    },
-    select: { id: true, updatedAt: true },
-    take: 1000,
-  });
+      select: { id: true, updatedAt: true },
+      take: 1000,
+    });
 
-  const userPages: MetadataRoute.Sitemap = usersWithQuizzes.map((user) => ({
-    url: `${baseUrl}/profile/${user.id}`,
-    lastModified: user.updatedAt,
-    changeFrequency: "weekly",
-    priority: 0.5,
-  }));
+    const userPages: MetadataRoute.Sitemap = usersWithQuizzes.map((user) => ({
+      url: `${baseUrl}/profile/${user.id}`,
+      lastModified: user.updatedAt,
+      changeFrequency: "weekly",
+      priority: 0.5,
+    }));
 
-  return [...staticPages, ...categoryPages, ...quizPages, ...userPages];
+    return [...staticPages, ...categoryPages, ...quizPages, ...userPages];
+  } catch (error) {
+    console.error("Failed to generate sitemap:", error);
+    return staticPages;
+  }
 }
