@@ -182,5 +182,23 @@
     "terms": "利用規約",
     "privacy": "プライバシーポリシー",
     "contact": "お問い合わせ"
+  },
+  "contact": {
+    "title": "お問い合わせ",
+    "subtitle": "ご質問・ご意見・ご要望などお気軽にお問い合わせください",
+    "name": "お名前",
+    "namePlaceholder": "山田 太郎",
+    "email": "メールアドレス",
+    "emailPlaceholder": "example@email.com",
+    "content": "お問い合わせ内容",
+    "contentPlaceholder": "お問い合わせ内容を入力してください",
+    "submit": "送信する",
+    "sending": "送信中...",
+    "successTitle": "送信完了",
+    "successMessage": "お問い合わせを受け付けました。担当者が確認後、ご連絡いたします。",
+    "errorTitle": "送信エラー",
+    "errorMessage": "送信に失敗しました。時間をおいて再度お試しください。",
+    "backToHome": "トップページに戻る",
+    "sendAnother": "続けて問い合わせる"
   }
 }

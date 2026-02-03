@@ -73,6 +73,7 @@ model User {
   scores          Score[]
   likes           Like[]
   feedbacks       Feedback[]
+  contacts        Contact[]
   comments        Comment[]
 
   @@index([totalScore(sort: Desc)])
@@ -250,6 +251,26 @@ model Like {
   @@unique([userId, quizId])
   @@index([userId])
   @@index([quizId])
+}
+
+// ========== お問い合わせ ==========
+
+model Contact {
+  id     String  @id @default(cuid())
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  name    String
+  email   String
+  content String @db.Text
+  status  String @default("unread") // unread, read, replied, closed
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
 }
 
 // ========== フィードバック ==========
