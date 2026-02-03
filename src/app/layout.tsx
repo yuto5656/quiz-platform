@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
@@ -59,7 +60,9 @@ export default async function RootLayout({
         <NextIntlClientProvider locale={locale} messages={messages}>
           <Providers>
             <SkipLink />
-            <div id="main-content">{children}</div>
+            <Suspense>
+              <div id="main-content">{children}</div>
+            </Suspense>
           </Providers>
         </NextIntlClientProvider>
         {/* JSON-LD structured data for SEO */}

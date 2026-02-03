@@ -32,6 +32,13 @@ vi.mock("@/lib/prisma", () => ({
   prisma: mockPrisma,
 }));
 
+// Mock env module
+vi.mock("@/lib/env", () => ({
+  env: {
+    ADMIN_EMAILS: "admin@example.com",
+  },
+}));
+
 import { GET } from "./route";
 
 function createRequest(url: string) {

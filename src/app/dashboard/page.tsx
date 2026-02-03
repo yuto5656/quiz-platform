@@ -14,8 +14,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AdminAvatar } from "@/components/common/admin-avatar";
 import {
   Trophy,
   BookOpen,
@@ -69,6 +69,7 @@ export default function DashboardPage() {
 
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -91,8 +92,21 @@ export default function DashboardPage() {
       }
     }
 
+    async function checkAdmin() {
+      try {
+        const res = await fetch("/api/admin/check");
+        if (res.ok) {
+          const adminData = await res.json();
+          setIsAdmin(adminData.isAdmin);
+        }
+      } catch {
+        // Ignore errors
+      }
+    }
+
     if (status === "authenticated") {
       fetchData();
+      checkAdmin();
     }
   }, [status]);
 
@@ -119,12 +133,6 @@ export default function DashboardPage() {
   }
 
   const { user, recentQuizzes, recentScores } = data;
-  const initials =
-    user.name
-      ?.split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase() || "?";
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -135,10 +143,12 @@ export default function DashboardPage() {
           <Card className="mb-8">
             <CardContent className="pt-6">
               <div className="flex flex-col sm:flex-row items-center gap-6">
-                <Avatar className="h-20 w-20">
-                  <AvatarImage src={user.image || ""} />
-                  <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
-                </Avatar>
+                <AdminAvatar
+                  isAdmin={isAdmin}
+                  image={user.image}
+                  name={user.name}
+                  size="lg"
+                />
                 <div className="text-center sm:text-left flex-1">
                   <h1 className="text-2xl font-bold">
                     {user.displayName || user.name || "ユーザー"}

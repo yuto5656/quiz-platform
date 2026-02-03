@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { env } from "@/lib/env";
+
+// Get admin emails list
+function getAdminEmails(): string[] {
+  return env.ADMIN_EMAILS?.split(",").map((e) => e.trim()) || [];
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -7,6 +13,9 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get("type") || "users"; // users, quizzes
     const limit = Math.min(parseInt(searchParams.get("limit") || "10"), 100);
     const period = searchParams.get("period") || "all"; // all, month, week
+
+    // Get admin emails to exclude from rankings
+    const adminEmails = getAdminEmails();
 
     // Calculate date filter
     let dateFilter: Date | undefined;
@@ -19,17 +28,21 @@ export async function GET(request: NextRequest) {
     }
 
     if (type === "users") {
-      // User rankings by total score
+      // User rankings by total score (exclude admins)
       const users = await prisma.user.findMany({
-        where: dateFilter
-          ? {
-              scores: {
-                some: {
-                  createdAt: { gte: dateFilter },
+        where: {
+          // Exclude admin users from rankings
+          ...(adminEmails.length > 0 ? { email: { notIn: adminEmails } } : {}),
+          ...(dateFilter
+            ? {
+                scores: {
+                  some: {
+                    createdAt: { gte: dateFilter },
+                  },
                 },
-              },
-            }
-          : undefined,
+              }
+            : {}),
+        },
         orderBy: { totalScore: "desc" },
         take: limit,
         select: {
@@ -104,10 +117,12 @@ export async function GET(request: NextRequest) {
     }
 
     if (type === "creators") {
-      // Creator rankings by quizzes created
+      // Creator rankings by quizzes created (exclude admins)
       const creators = await prisma.user.findMany({
         where: {
           quizzesCreated: { gt: 0 },
+          // Exclude admin users from rankings
+          ...(adminEmails.length > 0 ? { email: { notIn: adminEmails } } : {}),
         },
         orderBy: { quizzesCreated: "desc" },
         take: limit,

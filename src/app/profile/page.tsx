@@ -17,7 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AdminAvatar } from "@/components/common/admin-avatar";
 import { Loader2, Save, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
@@ -40,6 +40,7 @@ export default function ProfilePage() {
 
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -64,8 +65,21 @@ export default function ProfilePage() {
       }
     }
 
+    async function checkAdmin() {
+      try {
+        const res = await fetch("/api/admin/check");
+        if (res.ok) {
+          const data = await res.json();
+          setIsAdmin(data.isAdmin);
+        }
+      } catch {
+        // Ignore errors
+      }
+    }
+
     if (status === "authenticated") {
       fetchUser();
+      checkAdmin();
     }
   }, [status]);
 
@@ -122,13 +136,6 @@ export default function ProfilePage() {
     );
   }
 
-  const initials =
-    user.name
-      ?.split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase() || "?";
-
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
@@ -155,10 +162,12 @@ export default function ProfilePage() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Avatar and Account Info */}
                   <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
-                    <Avatar className="h-16 w-16">
-                      <AvatarImage src={user.image || ""} />
-                      <AvatarFallback className="text-xl">{initials}</AvatarFallback>
-                    </Avatar>
+                    <AdminAvatar
+                      isAdmin={isAdmin}
+                      image={user.image}
+                      name={user.name}
+                      size="md"
+                    />
                     <div>
                       <p className="font-medium">{user.name || "ユーザー"}</p>
                       <p className="text-sm text-muted-foreground">{user.email}</p>
