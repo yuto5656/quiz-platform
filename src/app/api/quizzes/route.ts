@@ -98,7 +98,8 @@ export async function GET(request: NextRequest) {
 const questionSchema = z.object({
   content: z.string().min(1).max(1000),
   options: z.array(z.string().min(1)).min(2).max(6),
-  correctIndex: z.number().int().min(0),
+  correctIndices: z.array(z.number().int().min(0)).min(1),
+  isMultipleChoice: z.boolean().default(false),
   explanation: z.string().max(2000).optional(),
   imageUrl: z.string().url().optional().or(z.literal("")),
   points: z.number().int().min(1).max(100).default(10),
@@ -137,7 +138,8 @@ export async function POST(request: NextRequest) {
           create: data.questions.map((q, index) => ({
             content: q.content,
             options: q.options,
-            correctIndex: q.correctIndex,
+            correctIndices: q.correctIndices,
+            isMultipleChoice: q.isMultipleChoice,
             explanation: q.explanation || null,
             imageUrl: q.imageUrl || null,
             points: q.points,
@@ -160,14 +162,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(quiz, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
+      console.error("Validation error:", JSON.stringify(error.issues, null, 2));
       return NextResponse.json(
         { error: "Validation error", details: error.issues },
         { status: 400 }
       );
     }
     console.error("Failed to create quiz:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to create quiz" },
+      { error: "Failed to create quiz", message: errorMessage },
       { status: 500 }
     );
   }

@@ -31,8 +31,9 @@ interface QuestionResult {
   questionId: string;
   content: string;
   options: string[];
-  selectedIndex: number;
-  correctIndex: number;
+  selectedIndices: number[];
+  correctIndices: number[];
+  isMultipleChoice: boolean;
   isCorrect: boolean;
   explanation: string | null;
   points: number;
@@ -260,32 +261,41 @@ export default function ResultPage() {
                     </div>
                   </CardHeader>
                   <CardContent>
+                    {result.isMultipleChoice && (
+                      <Badge variant="secondary" className="mb-3">
+                        複数選択問題
+                      </Badge>
+                    )}
                     <div className="space-y-2 mb-4">
-                      {(result.options as string[]).map((option, optIndex) => (
-                        <div
-                          key={optIndex}
-                          className={`p-3 rounded-lg border ${
-                            optIndex === result.correctIndex
-                              ? "bg-green-50 border-green-300 dark:bg-green-950 dark:border-green-700"
-                              : optIndex === result.selectedIndex &&
-                                  !result.isCorrect
-                                ? "bg-red-50 border-red-300 dark:bg-red-950 dark:border-red-700"
-                                : "bg-muted/30"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span>{option}</span>
-                            <div className="flex gap-2">
-                              {optIndex === result.selectedIndex && (
-                                <Badge variant="outline">あなたの回答</Badge>
-                              )}
-                              {optIndex === result.correctIndex && (
-                                <Badge variant="default">正解</Badge>
-                              )}
+                      {(result.options as string[]).map((option, optIndex) => {
+                        const isCorrectOption = result.correctIndices.includes(optIndex);
+                        const isSelected = result.selectedIndices.includes(optIndex);
+                        const isWrongSelection = isSelected && !isCorrectOption;
+                        return (
+                          <div
+                            key={optIndex}
+                            className={`p-3 rounded-lg border ${
+                              isCorrectOption
+                                ? "bg-green-50 border-green-300 dark:bg-green-950 dark:border-green-700"
+                                : isWrongSelection
+                                  ? "bg-red-50 border-red-300 dark:bg-red-950 dark:border-red-700"
+                                  : "bg-muted/30"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span>{option}</span>
+                              <div className="flex gap-2">
+                                {isSelected && (
+                                  <Badge variant="outline">あなたの回答</Badge>
+                                )}
+                                {isCorrectOption && (
+                                  <Badge variant="default">正解</Badge>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                     {result.explanation && (
                       <div className="p-3 bg-muted rounded-lg">

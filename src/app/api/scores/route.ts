@@ -8,12 +8,20 @@ const submitAnswerSchema = z.object({
   answers: z.array(
     z.object({
       questionId: z.string(),
-      selectedIndex: z.number().int().min(0),
+      selectedIndices: z.array(z.number().int().min(0)),
       timeSpent: z.number().int().min(0).optional(),
     })
   ),
   totalTimeSpent: z.number().int().min(0).optional(),
 });
+
+// Helper function to check if two arrays have the same elements
+function arraysEqual(a: number[], b: number[]): boolean {
+  if (a.length !== b.length) return false;
+  const sortedA = [...a].sort((x, y) => x - y);
+  const sortedB = [...b].sort((x, y) => x - y);
+  return sortedA.every((val, idx) => val === sortedB[idx]);
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,7 +39,8 @@ export async function POST(request: NextRequest) {
         questions: {
           select: {
             id: true,
-            correctIndex: true,
+            correctIndices: true,
+            isMultipleChoice: true,
             points: true,
             explanation: true,
           },
@@ -49,15 +58,18 @@ export async function POST(request: NextRequest) {
     const results: Array<{
       questionId: string;
       isCorrect: boolean;
-      selectedIndex: number;
-      correctIndex: number;
+      selectedIndices: number[];
+      correctIndices: number[];
+      isMultipleChoice: boolean;
       explanation: string | null;
     }> = [];
 
     for (const question of quiz.questions) {
       maxScore += question.points;
       const answer = data.answers.find((a) => a.questionId === question.id);
-      const isCorrect = answer?.selectedIndex === question.correctIndex;
+      const correctIndices = question.correctIndices as number[];
+      const selectedIndices = answer?.selectedIndices ?? [];
+      const isCorrect = arraysEqual(selectedIndices, correctIndices);
 
       if (isCorrect) {
         score += question.points;
@@ -67,8 +79,9 @@ export async function POST(request: NextRequest) {
       results.push({
         questionId: question.id,
         isCorrect,
-        selectedIndex: answer?.selectedIndex ?? -1,
-        correctIndex: question.correctIndex,
+        selectedIndices,
+        correctIndices,
+        isMultipleChoice: question.isMultipleChoice,
         explanation: question.explanation,
       });
 
@@ -77,7 +90,7 @@ export async function POST(request: NextRequest) {
           data: {
             userId: session.user.id,
             questionId: question.id,
-            selectedIndex: answer.selectedIndex,
+            selectedIndices: answer.selectedIndices,
             isCorrect,
             timeSpent: answer.timeSpent,
           },

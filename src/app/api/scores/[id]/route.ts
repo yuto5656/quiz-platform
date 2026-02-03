@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 
+function arraysEqual(a: number[], b: number[]): boolean {
+  if (a.length !== b.length) return false;
+  const sortedA = [...a].sort((x, y) => x - y);
+  const sortedB = [...b].sort((x, y) => x - y);
+  return sortedA.every((val, idx) => val === sortedB[idx]);
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -28,7 +35,8 @@ export async function GET(
                 id: true,
                 content: true,
                 options: true,
-                correctIndex: true,
+                correctIndices: true,
+                isMultipleChoice: true,
                 explanation: true,
                 points: true,
               },
@@ -57,23 +65,28 @@ export async function GET(
       orderBy: { createdAt: "desc" },
     });
 
-    const answerMap = new Map<string, number>();
+    const answerMap = new Map<string, number[]>();
     for (const history of answerHistories) {
       if (!answerMap.has(history.questionId)) {
-        answerMap.set(history.questionId, history.selectedIndex);
+        answerMap.set(history.questionId, history.selectedIndices as number[]);
       }
     }
 
-    const results = score.quiz.questions.map((q) => ({
-      questionId: q.id,
-      content: q.content,
-      options: q.options,
-      selectedIndex: answerMap.get(q.id) ?? -1,
-      correctIndex: q.correctIndex,
-      isCorrect: answerMap.get(q.id) === q.correctIndex,
-      explanation: q.explanation,
-      points: q.points,
-    }));
+    const results = score.quiz.questions.map((q) => {
+      const selectedIndices = answerMap.get(q.id) ?? [];
+      const correctIndices = q.correctIndices as number[];
+      return {
+        questionId: q.id,
+        content: q.content,
+        options: q.options,
+        selectedIndices,
+        correctIndices,
+        isMultipleChoice: q.isMultipleChoice,
+        isCorrect: arraysEqual(selectedIndices, correctIndices),
+        explanation: q.explanation,
+        points: q.points,
+      };
+    });
 
     return NextResponse.json({
       id: score.id,

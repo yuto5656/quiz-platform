@@ -17,14 +17,21 @@ const {
       update: vi.fn(),
       delete: vi.fn(),
     },
+    question: {
+      deleteMany: vi.fn(),
+      createMany: vi.fn(),
+    },
     user: {
       update: vi.fn(),
     },
+    $transaction: vi.fn(),
   };
 
   const resetPrismaMocks = () => {
     Object.values(mockPrisma).forEach((model) => {
-      if (typeof model === "object" && model !== null) {
+      if (typeof model === "function" && "mockReset" in model) {
+        (model as ReturnType<typeof vi.fn>).mockReset();
+      } else if (typeof model === "object" && model !== null) {
         Object.values(model).forEach((method) => {
           if (typeof method === "function" && "mockReset" in method) {
             (method as ReturnType<typeof vi.fn>).mockReset();
@@ -257,9 +264,11 @@ describe("PUT /api/quizzes/[id]", () => {
   it("should update quiz when user is the author", async () => {
     setAuthenticated();
     mockPrisma.quiz.findUnique.mockResolvedValue({ authorId: "user-123" });
-    mockPrisma.quiz.update.mockResolvedValue(
-      createMockQuiz({ title: "Updated Title" })
-    );
+    const updatedQuiz = createMockQuiz({ title: "Updated Title" });
+    mockPrisma.$transaction.mockImplementation(async (callback: (tx: typeof mockPrisma) => Promise<unknown>) => {
+      mockPrisma.quiz.update.mockResolvedValue(updatedQuiz);
+      return callback(mockPrisma);
+    });
 
     const request = createRequest("/api/quizzes/quiz-123", {
       method: "PUT",
@@ -290,7 +299,7 @@ describe("PUT /api/quizzes/[id]", () => {
   it("should handle database errors gracefully", async () => {
     setAuthenticated();
     mockPrisma.quiz.findUnique.mockResolvedValue({ authorId: "user-123" });
-    mockPrisma.quiz.update.mockRejectedValue(new Error("Database error"));
+    mockPrisma.$transaction.mockRejectedValue(new Error("Database error"));
 
     const request = createRequest("/api/quizzes/quiz-123", {
       method: "PUT",

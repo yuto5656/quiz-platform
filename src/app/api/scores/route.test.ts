@@ -97,8 +97,8 @@ describe("POST /api/scores", () => {
   const validAnswerData = {
     quizId: "quiz-123",
     answers: [
-      { questionId: "q1", selectedIndex: 1 },
-      { questionId: "q2", selectedIndex: 2 },
+      { questionId: "q1", selectedIndices: [1] },
+      { questionId: "q2", selectedIndices: [2] },
     ],
     totalTimeSpent: 120,
   };
@@ -107,8 +107,8 @@ describe("POST /api/scores", () => {
     id: "quiz-123",
     passingScore: 50,
     questions: [
-      { id: "q1", correctIndex: 1, points: 10, explanation: "Explanation 1" },
-      { id: "q2", correctIndex: 2, points: 10, explanation: "Explanation 2" },
+      { id: "q1", correctIndices: [1], isMultipleChoice: false, points: 10, explanation: "Explanation 1" },
+      { id: "q2", correctIndices: [2], isMultipleChoice: false, points: 10, explanation: "Explanation 2" },
     ],
   };
 
@@ -179,8 +179,8 @@ describe("POST /api/scores", () => {
     const partialAnswerData = {
       quizId: "quiz-123",
       answers: [
-        { questionId: "q1", selectedIndex: 1 }, // Correct
-        { questionId: "q2", selectedIndex: 0 }, // Wrong
+        { questionId: "q1", selectedIndices: [1] }, // Correct
+        { questionId: "q2", selectedIndices: [0] }, // Wrong
       ],
     };
 
@@ -215,8 +215,8 @@ describe("POST /api/scores", () => {
     const partialAnswerData = {
       quizId: "quiz-123",
       answers: [
-        { questionId: "q1", selectedIndex: 1 },
-        { questionId: "q2", selectedIndex: 0 },
+        { questionId: "q1", selectedIndices: [1] },
+        { questionId: "q2", selectedIndices: [0] },
       ],
     };
 
@@ -250,8 +250,9 @@ describe("POST /api/scores", () => {
     expect(data.results[0]).toEqual({
       questionId: "q1",
       isCorrect: true,
-      selectedIndex: 1,
-      correctIndex: 1,
+      selectedIndices: [1],
+      correctIndices: [1],
+      isMultipleChoice: false,
       explanation: "Explanation 1",
     });
   });

@@ -162,8 +162,11 @@ model Question {
   // 選択肢（JSON配列）
   options Json // ["選択肢A", "選択肢B", "選択肢C", "選択肢D"]
 
-  // 正解インデックス（0から始まる）
-  correctIndex Int
+  // 正解インデックス（0から始まる配列）
+  correctIndices Json // [0] or [0, 2] for multiple correct answers
+
+  // 複数回答を許可するかどうか
+  isMultipleChoice Boolean @default(false)
 
   // 並び順
   order Int @default(0)
@@ -189,8 +192,8 @@ model AnswerHistory {
   question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   // 回答内容
-  selectedIndex Int
-  isCorrect     Boolean
+  selectedIndices Json // [0] or [0, 2] for multiple selections
+  isCorrect       Boolean
   timeSpent     Int? // 回答にかかった時間（秒）
 
   createdAt DateTime @default(now())

@@ -23,6 +23,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import {
   Plus,
   Trash2,
@@ -43,7 +45,8 @@ interface Category {
 interface QuestionInput {
   content: string;
   options: string[];
-  correctIndex: number;
+  correctIndices: number[];
+  isMultipleChoice: boolean;
   explanation: string;
   points: number;
 }
@@ -63,7 +66,7 @@ export default function CreateQuizPage() {
   const [timeLimit, setTimeLimit] = useState<number | null>(null);
   const [passingScore, setPassingScore] = useState(60);
   const [questions, setQuestions] = useState<QuestionInput[]>([
-    { content: "", options: ["", "", "", ""], correctIndex: 0, explanation: "", points: 10 },
+    { content: "", options: ["", "", "", ""], correctIndices: [0], isMultipleChoice: false, explanation: "", points: 10 },
   ]);
 
   useEffect(() => {
@@ -90,7 +93,7 @@ export default function CreateQuizPage() {
   const addQuestion = () => {
     setQuestions([
       ...questions,
-      { content: "", options: ["", "", "", ""], correctIndex: 0, explanation: "", points: 10 },
+      { content: "", options: ["", "", "", ""], correctIndices: [0], isMultipleChoice: false, explanation: "", points: 10 },
     ]);
   };
 
@@ -124,11 +127,42 @@ export default function CreateQuizPage() {
     if (questions[questionIndex].options.length > 2) {
       const newQuestions = [...questions];
       newQuestions[questionIndex].options.splice(optionIndex, 1);
-      if (newQuestions[questionIndex].correctIndex >= newQuestions[questionIndex].options.length) {
-        newQuestions[questionIndex].correctIndex = 0;
+      // Filter out indices that are now out of range, and adjust remaining indices
+      newQuestions[questionIndex].correctIndices = newQuestions[questionIndex].correctIndices
+        .filter((idx) => idx !== optionIndex)
+        .map((idx) => (idx > optionIndex ? idx - 1 : idx));
+      // Ensure at least one correct answer
+      if (newQuestions[questionIndex].correctIndices.length === 0) {
+        newQuestions[questionIndex].correctIndices = [0];
       }
       setQuestions(newQuestions);
     }
+  };
+
+  const toggleCorrectIndex = (questionIndex: number, optionIndex: number) => {
+    const newQuestions = [...questions];
+    const question = newQuestions[questionIndex];
+    if (question.isMultipleChoice) {
+      const isSelected = question.correctIndices.includes(optionIndex);
+      if (isSelected && question.correctIndices.length > 1) {
+        question.correctIndices = question.correctIndices.filter((idx) => idx !== optionIndex);
+      } else if (!isSelected) {
+        question.correctIndices = [...question.correctIndices, optionIndex].sort((a, b) => a - b);
+      }
+    } else {
+      question.correctIndices = [optionIndex];
+    }
+    setQuestions(newQuestions);
+  };
+
+  const toggleMultipleChoice = (questionIndex: number, enabled: boolean) => {
+    const newQuestions = [...questions];
+    newQuestions[questionIndex].isMultipleChoice = enabled;
+    // Reset to single correct answer when switching to single choice
+    if (!enabled && newQuestions[questionIndex].correctIndices.length > 1) {
+      newQuestions[questionIndex].correctIndices = [newQuestions[questionIndex].correctIndices[0]];
+    }
+    setQuestions(newQuestions);
   };
 
   const moveQuestion = (index: number, direction: "up" | "down") => {
@@ -156,6 +190,14 @@ export default function CreateQuizPage() {
       toast.error("すべての選択肢を入力してください");
       return;
     }
+    // Validate correctIndices are within range
+    for (const q of questions) {
+      const validOptionsCount = q.options.filter((o) => o.trim()).length;
+      if (q.correctIndices.some((idx) => idx >= validOptionsCount)) {
+        toast.error("正解のインデックスが選択肢の範囲外です");
+        return;
+      }
+    }
 
     setIsSaving(true);
     try {
@@ -171,7 +213,8 @@ export default function CreateQuizPage() {
           questions: questions.map((q) => ({
             content: q.content,
             options: q.options.filter((o) => o.trim()),
-            correctIndex: q.correctIndex,
+            correctIndices: q.correctIndices,
+            isMultipleChoice: q.isMultipleChoice,
             explanation: q.explanation || undefined,
             points: q.points,
           })),
@@ -179,7 +222,18 @@ export default function CreateQuizPage() {
       });
 
       if (!res.ok) {
-        const error = await res.json();
+        const text = await res.text();
+        console.error("Quiz creation error response:", text);
+        console.error("Response status:", res.status);
+        let error;
+        try {
+          error = JSON.parse(text);
+        } catch {
+          error = { error: text || "Unknown error" };
+        }
+        if (error.details) {
+          console.error("Validation details:", error.details);
+        }
         throw new Error(error.error || "Failed to create quiz");
       }
 
@@ -347,49 +401,92 @@ export default function CreateQuizPage() {
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <Label>選択肢 * (正解を選択してください)</Label>
-                          {question.options.length < 6 && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => addOption(qIndex)}
-                            >
-                              <Plus className="h-4 w-4 mr-1" />
-                              追加
-                            </Button>
-                          )}
-                        </div>
-                        <RadioGroup
-                          value={question.correctIndex.toString()}
-                          onValueChange={(value) =>
-                            updateQuestion(qIndex, { correctIndex: parseInt(value) })
-                          }
-                        >
-                          {question.options.map((option, oIndex) => (
-                            <div key={oIndex} className="flex items-center gap-2">
-                              <RadioGroupItem
-                                value={oIndex.toString()}
-                                id={`q${qIndex}-o${oIndex}`}
+                          <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                id={`multiple-choice-${qIndex}`}
+                                checked={question.isMultipleChoice}
+                                onCheckedChange={(checked) => toggleMultipleChoice(qIndex, checked)}
                               />
-                              <Input
-                                className="flex-1"
-                                placeholder={`選択肢 ${oIndex + 1}`}
-                                value={option}
-                                onChange={(e) =>
-                                  updateOption(qIndex, oIndex, e.target.value)
-                                }
-                              />
-                              {question.options.length > 2 && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => removeOption(qIndex, oIndex)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              )}
+                              <Label htmlFor={`multiple-choice-${qIndex}`} className="text-sm font-normal">
+                                複数選択
+                              </Label>
                             </div>
-                          ))}
-                        </RadioGroup>
+                            {question.options.length < 6 && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => addOption(qIndex)}
+                              >
+                                <Plus className="h-4 w-4 mr-1" />
+                                追加
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                        {question.isMultipleChoice ? (
+                          <div className="space-y-2">
+                            {question.options.map((option, oIndex) => (
+                              <div key={oIndex} className="flex items-center gap-2">
+                                <Checkbox
+                                  id={`q${qIndex}-o${oIndex}`}
+                                  checked={question.correctIndices.includes(oIndex)}
+                                  onCheckedChange={() => toggleCorrectIndex(qIndex, oIndex)}
+                                />
+                                <Input
+                                  className="flex-1"
+                                  placeholder={`選択肢 ${oIndex + 1}`}
+                                  value={option}
+                                  onChange={(e) =>
+                                    updateOption(qIndex, oIndex, e.target.value)
+                                  }
+                                />
+                                {question.options.length > 2 && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => removeOption(qIndex, oIndex)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <RadioGroup
+                            value={question.correctIndices[0]?.toString() ?? "0"}
+                            onValueChange={(value) =>
+                              updateQuestion(qIndex, { correctIndices: [parseInt(value)] })
+                            }
+                          >
+                            {question.options.map((option, oIndex) => (
+                              <div key={oIndex} className="flex items-center gap-2">
+                                <RadioGroupItem
+                                  value={oIndex.toString()}
+                                  id={`q${qIndex}-o${oIndex}`}
+                                />
+                                <Input
+                                  className="flex-1"
+                                  placeholder={`選択肢 ${oIndex + 1}`}
+                                  value={option}
+                                  onChange={(e) =>
+                                    updateOption(qIndex, oIndex, e.target.value)
+                                  }
+                                />
+                                {question.options.length > 2 && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => removeOption(qIndex, oIndex)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            ))}
+                          </RadioGroup>
+                        )}
                       </div>
 
                       <div className="grid gap-4 sm:grid-cols-2">

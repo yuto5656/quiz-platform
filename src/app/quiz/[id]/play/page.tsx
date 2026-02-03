@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Header } from "@/components/layout/header";
 import {
@@ -23,6 +25,7 @@ interface Question {
   imageUrl: string | null;
   points: number;
   order: number;
+  isMultipleChoice: boolean;
 }
 
 interface QuizData {
@@ -39,7 +42,7 @@ export default function QuizPlayPage() {
 
   const [quizData, setQuizData] = useState<QuizData | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState<Map<string, number>>(new Map());
+  const [answers, setAnswers] = useState<Map<string, number[]>>(new Map());
   const [remainingTime, setRemainingTime] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -88,8 +91,26 @@ export default function QuizPlayPage() {
     return () => clearInterval(timer);
   }, [remainingTime]);
 
-  const handleSelectAnswer = (questionId: string, optionIndex: number) => {
-    setAnswers((prev) => new Map(prev).set(questionId, optionIndex));
+  const handleSelectAnswer = (questionId: string, optionIndex: number, isMultipleChoice: boolean) => {
+    setAnswers((prev) => {
+      const newAnswers = new Map(prev);
+      if (isMultipleChoice) {
+        const current = newAnswers.get(questionId) ?? [];
+        if (current.includes(optionIndex)) {
+          const filtered = current.filter((i) => i !== optionIndex);
+          if (filtered.length > 0) {
+            newAnswers.set(questionId, filtered);
+          } else {
+            newAnswers.delete(questionId);
+          }
+        } else {
+          newAnswers.set(questionId, [...current, optionIndex].sort((a, b) => a - b));
+        }
+      } else {
+        newAnswers.set(questionId, [optionIndex]);
+      }
+      return newAnswers;
+    });
   };
 
   const handleSubmit = async () => {
@@ -106,7 +127,7 @@ export default function QuizPlayPage() {
           quizId: quizData.quizId,
           answers: quizData.questions.map((q) => ({
             questionId: q.id,
-            selectedIndex: answers.get(q.id) ?? -1,
+            selectedIndices: answers.get(q.id) ?? [],
           })),
           totalTimeSpent,
         }),
@@ -199,39 +220,84 @@ export default function QuizPlayPage() {
                 className="mb-4 max-h-64 rounded-lg object-contain"
               />
             )}
-            <RadioGroup
-              value={answers.get(currentQuestion.id)?.toString() ?? ""}
-              onValueChange={(value) =>
-                handleSelectAnswer(currentQuestion.id, parseInt(value))
-              }
-            >
+            {currentQuestion.isMultipleChoice && (
+              <Badge variant="secondary" className="mb-3">
+                複数選択可
+              </Badge>
+            )}
+            {currentQuestion.isMultipleChoice ? (
               <div className="space-y-3">
-                {(currentQuestion.options as string[]).map((option, index) => (
-                  <div
-                    key={index}
-                    className={`flex items-center space-x-3 rounded-lg border p-4 cursor-pointer transition-colors ${
-                      answers.get(currentQuestion.id) === index
-                        ? "border-primary bg-primary/5"
-                        : "hover:bg-muted/50"
-                    }`}
-                    onClick={() =>
-                      handleSelectAnswer(currentQuestion.id, index)
-                    }
-                  >
-                    <RadioGroupItem
-                      value={index.toString()}
-                      id={`option-${index}`}
-                    />
-                    <Label
-                      htmlFor={`option-${index}`}
-                      className="flex-1 cursor-pointer"
+                {(currentQuestion.options as string[]).map((option, index) => {
+                  const selectedIndices = answers.get(currentQuestion.id) ?? [];
+                  const isSelected = selectedIndices.includes(index);
+                  return (
+                    <div
+                      key={index}
+                      className={`flex items-center space-x-3 rounded-lg border p-4 cursor-pointer transition-colors ${
+                        isSelected
+                          ? "border-primary bg-primary/5"
+                          : "hover:bg-muted/50"
+                      }`}
+                      onClick={() =>
+                        handleSelectAnswer(currentQuestion.id, index, true)
+                      }
                     >
-                      {option}
-                    </Label>
-                  </div>
-                ))}
+                      <Checkbox
+                        id={`option-${index}`}
+                        checked={isSelected}
+                        onCheckedChange={() =>
+                          handleSelectAnswer(currentQuestion.id, index, true)
+                        }
+                      />
+                      <Label
+                        htmlFor={`option-${index}`}
+                        className="flex-1 cursor-pointer"
+                      >
+                        {option}
+                      </Label>
+                    </div>
+                  );
+                })}
               </div>
-            </RadioGroup>
+            ) : (
+              <RadioGroup
+                value={answers.get(currentQuestion.id)?.[0]?.toString() ?? ""}
+                onValueChange={(value) =>
+                  handleSelectAnswer(currentQuestion.id, parseInt(value), false)
+                }
+              >
+                <div className="space-y-3">
+                  {(currentQuestion.options as string[]).map((option, index) => {
+                    const selectedIndices = answers.get(currentQuestion.id) ?? [];
+                    const isSelected = selectedIndices.includes(index);
+                    return (
+                      <div
+                        key={index}
+                        className={`flex items-center space-x-3 rounded-lg border p-4 cursor-pointer transition-colors ${
+                          isSelected
+                            ? "border-primary bg-primary/5"
+                            : "hover:bg-muted/50"
+                        }`}
+                        onClick={() =>
+                          handleSelectAnswer(currentQuestion.id, index, false)
+                        }
+                      >
+                        <RadioGroupItem
+                          value={index.toString()}
+                          id={`option-${index}`}
+                        />
+                        <Label
+                          htmlFor={`option-${index}`}
+                          className="flex-1 cursor-pointer"
+                        >
+                          {option}
+                        </Label>
+                      </div>
+                    );
+                  })}
+                </div>
+              </RadioGroup>
+            )}
           </CardContent>
         </Card>
 

@@ -31,6 +31,7 @@ export async function GET(
             imageUrl: true,
             points: true,
             order: true,
+            isMultipleChoice: true,
           },
         },
       },

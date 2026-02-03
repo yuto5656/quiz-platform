@@ -270,7 +270,8 @@ describe("POST /api/quizzes", () => {
       {
         content: "What is 2 + 2?",
         options: ["3", "4", "5", "6"],
-        correctIndex: 1,
+        correctIndices: [1],
+        isMultipleChoice: false,
         explanation: "Basic math",
         points: 10,
       },
@@ -342,7 +343,7 @@ describe("POST /api/quizzes", () => {
         {
           content: "Question?",
           options: ["Only one option"], // Needs at least 2
-          correctIndex: 0,
+          correctIndices: [0],
         },
       ],
     };
