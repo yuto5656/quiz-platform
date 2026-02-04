@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { isAdminEmail } from "@/lib/env";
-import { generateCategoryMetadata } from "@/lib/seo";
+import { generateCategoryMetadata, generateBreadcrumbJsonLd, breadcrumbHelpers } from "@/lib/seo";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { QuizCard } from "@/components/quiz/quiz-card";
@@ -167,6 +167,20 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
         </div>
       </main>
       <Footer />
+      {/* JSON-LD structured data for breadcrumb */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(
+            generateBreadcrumbJsonLd(
+              breadcrumbHelpers.category({
+                name: category.name,
+                slug: category.slug,
+              })
+            )
+          ),
+        }}
+      />
     </div>
   );
 }

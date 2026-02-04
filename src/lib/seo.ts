@@ -41,6 +41,22 @@ export interface OrganizationJsonLd {
   sameAs: string[];
 }
 
+export interface BreadcrumbJsonLd {
+  "@context": string;
+  "@type": string;
+  itemListElement: {
+    "@type": string;
+    position: number;
+    name: string;
+    item: string;
+  }[];
+}
+
+export interface BreadcrumbItem {
+  name: string;
+  url: string;
+}
+
 // Input types for metadata generators
 export interface QuizMetadataInput {
   id: string;
@@ -373,3 +389,64 @@ export function generateOrganizationJsonLd(): OrganizationJsonLd {
     sameAs: [],
   };
 }
+
+/**
+ * JSON-LD構造化データ: パンくずリスト用
+ * Google検索結果でパンくずナビゲーションとして表示される
+ */
+export function generateBreadcrumbJsonLd(items: BreadcrumbItem[]): BreadcrumbJsonLd {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  };
+}
+
+/**
+ * パンくずリストのヘルパー関数
+ */
+export const breadcrumbHelpers = {
+  /**
+   * クイズ詳細ページ用: ホーム > カテゴリ > クイズ名
+   */
+  quiz: (quiz: { title: string; id: string; category?: { name: string; slug: string } | null }): BreadcrumbItem[] => {
+    const items: BreadcrumbItem[] = [
+      { name: "ホーム", url: siteConfig.url },
+    ];
+
+    if (quiz.category) {
+      items.push({
+        name: quiz.category.name,
+        url: urlHelpers.category(quiz.category.slug),
+      });
+    }
+
+    items.push({
+      name: quiz.title,
+      url: urlHelpers.quiz(quiz.id),
+    });
+
+    return items;
+  },
+
+  /**
+   * カテゴリページ用: ホーム > カテゴリ名
+   */
+  category: (category: { name: string; slug: string }): BreadcrumbItem[] => [
+    { name: "ホーム", url: siteConfig.url },
+    { name: category.name, url: urlHelpers.category(category.slug) },
+  ],
+
+  /**
+   * ユーザープロフィールページ用: ホーム > ユーザー名
+   */
+  profile: (user: { name: string | null; id: string }): BreadcrumbItem[] => [
+    { name: "ホーム", url: siteConfig.url },
+    { name: user.name || "ユーザー", url: urlHelpers.profile(user.id) },
+  ],
+};

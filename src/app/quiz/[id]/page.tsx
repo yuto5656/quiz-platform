@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/env";
-import { generateQuizMetadata, generateQuizJsonLd } from "@/lib/seo";
+import { generateQuizMetadata, generateQuizJsonLd, generateBreadcrumbJsonLd, breadcrumbHelpers } from "@/lib/seo";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ import {
 import { SidebarAd, InFeedAd } from "@/components/ads";
 import { ShareButton } from "@/components/common/share-button";
 import { CommentSection } from "@/components/quiz/comment-section";
+import { QuizCard } from "@/components/quiz/quiz-card";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -107,6 +108,53 @@ async function getCurrentUser(userId: string) {
   }
 }
 
+async function getRelatedQuizzes(quizId: string, categoryId: string | null) {
+  try {
+    const quizzes = await prisma.quiz.findMany({
+      where: {
+        isPublic: true,
+        id: { not: quizId },
+        ...(categoryId ? { categoryId } : {}),
+      },
+      orderBy: { playCount: "desc" },
+      take: 3,
+      include: {
+        author: {
+          select: { id: true, name: true, displayName: true, image: true, email: true, customAvatar: true },
+        },
+        category: {
+          select: { id: true, name: true, slug: true },
+        },
+        _count: {
+          select: { questions: true },
+        },
+      },
+    });
+
+    return quizzes.map((q) => ({
+      id: q.id,
+      title: q.title,
+      description: q.description,
+      author: {
+        id: q.author.id,
+        name: q.author.name,
+        displayName: q.author.displayName,
+        image: q.author.image,
+        customAvatar: q.author.customAvatar,
+        isAdmin: isAdminEmail(q.author.email),
+      },
+      category: q.category,
+      questionCount: q._count.questions,
+      playCount: q.playCount,
+      avgScore: q.avgScore,
+      timeLimit: q.timeLimit,
+    }));
+  } catch (error) {
+    console.error("Failed to fetch related quizzes:", error);
+    return [];
+  }
+}
+
 export default async function QuizDetailPage({ params }: Props) {
   const { id } = await params;
   const [quiz, session] = await Promise.all([getQuiz(id), auth()]);
@@ -121,8 +169,11 @@ export default async function QuizDetailPage({ params }: Props) {
     }
   }
 
-  // コメント用にcurrentUser情報を取得
-  const currentUser = session?.user?.id ? await getCurrentUser(session.user.id) : null;
+  // コメント用にcurrentUser情報を取得、関連クイズを取得
+  const [currentUser, relatedQuizzes] = await Promise.all([
+    session?.user?.id ? getCurrentUser(session.user.id) : Promise.resolve(null),
+    getRelatedQuizzes(quiz.id, quiz.category?.id || null),
+  ]);
 
   const authorDisplayName = quiz.author.displayName || quiz.author.name;
   const isAuthorAdmin = isAdminEmail(quiz.author.email);
@@ -231,6 +282,25 @@ export default async function QuizDetailPage({ params }: Props) {
 
               {/* Comment Section */}
               <CommentSection quizId={quiz.id} quizAuthorId={quiz.authorId} currentUser={currentUser} />
+
+              {/* Related Quizzes */}
+              {relatedQuizzes.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">関連クイズ</CardTitle>
+                    <CardDescription>
+                      {quiz.category ? `${quiz.category.name}の他のクイズ` : "人気のクイズ"}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {relatedQuizzes.map((relatedQuiz) => (
+                        <QuizCard key={relatedQuiz.id} quiz={relatedQuiz} showAuthor={false} />
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
             {/* Sidebar */}
@@ -308,6 +378,21 @@ export default async function QuizDetailPage({ params }: Props) {
               createdAt: quiz.createdAt,
               updatedAt: quiz.updatedAt,
             })
+          ),
+        }}
+      />
+      {/* JSON-LD structured data for breadcrumb */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(
+            generateBreadcrumbJsonLd(
+              breadcrumbHelpers.quiz({
+                id: quiz.id,
+                title: quiz.title,
+                category: quiz.category,
+              })
+            )
           ),
         }}
       />

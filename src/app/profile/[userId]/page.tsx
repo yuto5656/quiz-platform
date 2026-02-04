@@ -1,7 +1,9 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { isAdminEmail } from "@/lib/env";
+import { generateUserMetadata, generateBreadcrumbJsonLd, breadcrumbHelpers } from "@/lib/seo";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { QuizCard } from "@/components/quiz/quiz-card";
@@ -212,11 +214,25 @@ export default async function UserProfilePage({ params }: ProfilePageProps) {
         </div>
       </main>
       <Footer />
+      {/* JSON-LD structured data for breadcrumb */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(
+            generateBreadcrumbJsonLd(
+              breadcrumbHelpers.profile({
+                id: user.id,
+                name: displayName,
+              })
+            )
+          ),
+        }}
+      />
     </div>
   );
 }
 
-export async function generateMetadata({ params }: ProfilePageProps) {
+export async function generateMetadata({ params }: ProfilePageProps): Promise<Metadata> {
   const { userId } = await params;
   const data = await getUserProfile(userId);
 
@@ -226,8 +242,10 @@ export async function generateMetadata({ params }: ProfilePageProps) {
 
   const displayName = data.user.displayName || data.user.name || "ユーザー";
 
-  return {
-    title: `${displayName}のプロフィール | Quiz Platform`,
-    description: data.user.bio || `${displayName}さんのプロフィールページ`,
-  };
+  return generateUserMetadata({
+    id: data.user.id,
+    name: displayName,
+    bio: data.user.bio,
+    quizCount: data.user.quizzesCreated,
+  });
 }
