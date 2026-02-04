@@ -18,8 +18,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { AdminAvatar } from "@/components/common/admin-avatar";
-import { Loader2, Save, ArrowLeft, X, ImageIcon } from "lucide-react";
+import { Loader2, Save, ArrowLeft, X, ImageIcon, Upload, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { useRef, useCallback } from "react";
 
 interface UserData {
   id: string;
@@ -44,6 +45,8 @@ export default function ProfilePage() {
   const [customAvatar, setCustomAvatar] = useState("");
   const [avatarError, setAvatarError] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -86,6 +89,71 @@ export default function ProfilePage() {
       checkAdmin();
     }
   }, [status]);
+
+  const handleFileUpload = useCallback(async (file: File) => {
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("対応形式: JPEG, PNG, GIF, WebP");
+      return;
+    }
+
+    // Validate file size (2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("ファイルサイズは2MB以下にしてください");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload/avatar", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "アップロードに失敗しました");
+      }
+
+      const data = await res.json();
+      setCustomAvatar(data.url);
+      setAvatarError(false);
+      toast.success("アバターをアップロードしました");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "アップロードに失敗しました");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  }, []);
+
+  const handleDeleteAvatar = useCallback(async () => {
+    if (!customAvatar) return;
+
+    try {
+      const res = await fetch("/api/upload/avatar", {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        throw new Error("削除に失敗しました");
+      }
+
+      setCustomAvatar("");
+      setAvatarError(false);
+      toast.success("アバターを削除しました");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "削除に失敗しました");
+    }
+  }, [customAvatar]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -183,57 +251,68 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  {/* Custom Avatar URL */}
+                  {/* Custom Avatar Upload */}
                   <div className="space-y-2">
-                    <Label htmlFor="customAvatar">カスタムアバター</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="customAvatar"
-                        type="url"
-                        placeholder="https://example.com/avatar.png"
-                        value={customAvatar}
-                        onChange={(e) => {
-                          setCustomAvatar(e.target.value);
-                          setAvatarError(false);
-                        }}
-                        maxLength={500}
-                        className="flex-1"
-                      />
-                      {customAvatar && (
+                    <Label>カスタムアバター</Label>
+                    <div className="flex flex-col gap-4">
+                      {/* Upload button */}
+                      <div className="flex items-center gap-2">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/jpeg,image/png,image/gif,image/webp"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleFileUpload(file);
+                          }}
+                        />
                         <Button
                           type="button"
                           variant="outline"
-                          size="icon"
-                          onClick={() => {
-                            setCustomAvatar("");
-                            setAvatarError(false);
-                          }}
-                          title="クリア"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploading}
                         >
-                          <X className="h-4 w-4" />
+                          {isUploading ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <Upload className="mr-2 h-4 w-4" />
+                          )}
+                          画像をアップロード
                         </Button>
+                        {customAvatar && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={handleDeleteAvatar}
+                            title="アバターを削除"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                      {/* Preview */}
+                      {customAvatar && !avatarError && (
+                        <div className="flex items-center gap-2">
+                          <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">現在のアバター:</span>
+                          <img
+                            src={customAvatar}
+                            alt="Avatar preview"
+                            className="h-10 w-10 rounded-full object-cover"
+                            onError={() => setAvatarError(true)}
+                          />
+                        </div>
+                      )}
+                      {avatarError && (
+                        <p className="text-xs text-destructive">
+                          画像の読み込みに失敗しました
+                        </p>
                       )}
                     </div>
-                    {customAvatar && !avatarError && (
-                      <div className="flex items-center gap-2 mt-2">
-                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">プレビュー:</span>
-                        {/* Hidden img to detect load errors */}
-                        <img
-                          src={customAvatar}
-                          alt="Avatar preview"
-                          className="h-8 w-8 rounded-full object-cover"
-                          onError={() => setAvatarError(true)}
-                        />
-                      </div>
-                    )}
-                    {avatarError && (
-                      <p className="text-xs text-destructive">
-                        画像の読み込みに失敗しました。URLを確認してください。
-                      </p>
-                    )}
                     <p className="text-xs text-muted-foreground">
-                      設定するとGoogleアバターの代わりにこの画像が表示されます。未設定の場合はデフォルトアイコンが表示されます。
+                      対応形式: JPEG, PNG, GIF, WebP（最大2MB）
                     </p>
                   </div>
 
