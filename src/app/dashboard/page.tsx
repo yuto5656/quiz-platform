@@ -33,6 +33,7 @@ interface UserData {
   image: string | null;
   displayName: string | null;
   bio: string | null;
+  customAvatar: string | null;
   totalScore: number;
   quizzesTaken: number;
   quizzesCreated: number;
@@ -145,6 +146,7 @@ export default function DashboardPage() {
               <div className="flex flex-col sm:flex-row items-center gap-6">
                 <AdminAvatar
                   isAdmin={isAdmin}
+                  customAvatar={user.customAvatar || undefined}
                   image={user.image}
                   name={user.name}
                   size="lg"

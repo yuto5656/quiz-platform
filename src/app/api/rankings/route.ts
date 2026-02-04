@@ -50,6 +50,7 @@ export async function GET(request: NextRequest) {
           name: true,
           image: true,
           displayName: true,
+          customAvatar: true,
           totalScore: true,
           quizzesTaken: true,
           quizzesCreated: true,
@@ -62,7 +63,7 @@ export async function GET(request: NextRequest) {
           user: {
             id: user.id,
             name: user.displayName || user.name,
-            image: user.image,
+            image: user.customAvatar || user.image,
             totalScore: user.totalScore,
             quizzesTaken: user.quizzesTaken,
             quizzesCreated: user.quizzesCreated,
@@ -91,7 +92,7 @@ export async function GET(request: NextRequest) {
         orderBy: { playCount: "desc" },
         take: limit,
         include: {
-          author: { select: { id: true, name: true, displayName: true, image: true } },
+          author: { select: { id: true, name: true, displayName: true, image: true, customAvatar: true } },
           category: { select: { id: true, name: true, slug: true } },
           _count: { select: { questions: true } },
         },
@@ -103,7 +104,11 @@ export async function GET(request: NextRequest) {
           quiz: {
             id: quiz.id,
             title: quiz.title,
-            author: quiz.author,
+            author: {
+              id: quiz.author?.id,
+              name: quiz.author?.displayName || quiz.author?.name,
+              image: quiz.author?.customAvatar || quiz.author?.image,
+            },
             category: quiz.category,
             questionCount: quiz._count.questions,
             playCount: quiz.playCount,
@@ -131,6 +136,7 @@ export async function GET(request: NextRequest) {
           name: true,
           image: true,
           displayName: true,
+          customAvatar: true,
           quizzesCreated: true,
           _count: {
             select: {
@@ -159,7 +165,7 @@ export async function GET(request: NextRequest) {
           return {
             id: creator.id,
             name: creator.displayName || creator.name,
-            image: creator.image,
+            image: creator.customAvatar || creator.image,
             quizzesCreated: creator.quizzesCreated,
             totalPlays: stats._sum.playCount || 0,
             totalLikes: stats._sum.likeCount || 0,

@@ -24,20 +24,30 @@ interface UserMenuProps {
 
 export function UserMenu({ user }: UserMenuProps) {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [customAvatar, setCustomAvatar] = useState<string | null>(null);
 
   useEffect(() => {
-    async function checkAdmin() {
+    async function fetchUserData() {
       try {
-        const res = await fetch("/api/admin/check");
-        if (res.ok) {
-          const data = await res.json();
+        const [adminRes, userRes] = await Promise.all([
+          fetch("/api/admin/check"),
+          fetch("/api/users/me"),
+        ]);
+
+        if (adminRes.ok) {
+          const data = await adminRes.json();
           setIsAdmin(data.isAdmin);
+        }
+
+        if (userRes.ok) {
+          const data = await userRes.json();
+          setCustomAvatar(data.user?.customAvatar || null);
         }
       } catch {
         // Ignore errors
       }
     }
-    checkAdmin();
+    fetchUserData();
   }, []);
 
   return (
@@ -46,6 +56,7 @@ export function UserMenu({ user }: UserMenuProps) {
         <button className="relative h-8 w-8 rounded-full">
           <AdminAvatar
             isAdmin={isAdmin}
+            customAvatar={customAvatar || undefined}
             image={user.image}
             name={user.name}
             size="sm"
