@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { isAdminEmail } from "@/lib/env";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { QuizCard } from "@/components/quiz/quiz-card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AdminAvatar } from "@/components/common/admin-avatar";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -32,9 +33,11 @@ async function getUserProfile(userId: string) {
       select: {
         id: true,
         name: true,
+        email: true,
         image: true,
         displayName: true,
         bio: true,
+        customAvatar: true,
         totalScore: true,
         quizzesTaken: true,
         quizzesCreated: true,
@@ -49,7 +52,7 @@ async function getUserProfile(userId: string) {
       orderBy: { createdAt: "desc" },
       take: 6,
       include: {
-        author: { select: { id: true, name: true, image: true } },
+        author: { select: { id: true, name: true, displayName: true, image: true, email: true, customAvatar: true } },
         category: { select: { id: true, name: true, slug: true } },
         _count: { select: { questions: true } },
       },
@@ -61,7 +64,14 @@ async function getUserProfile(userId: string) {
         id: q.id,
         title: q.title,
         description: q.description,
-        author: q.author,
+        author: {
+          id: q.author.id,
+          name: q.author.name,
+          displayName: q.author.displayName,
+          image: q.author.image,
+          customAvatar: q.author.customAvatar,
+          isAdmin: isAdminEmail(q.author.email),
+        },
         category: q.category,
         questionCount: q._count.questions,
         playCount: q.playCount,
@@ -85,14 +95,8 @@ export default async function UserProfilePage({ params }: ProfilePageProps) {
 
   const { user, quizzes } = data;
 
-  const initials =
-    user.name
-      ?.split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase() || "?";
-
   const displayName = user.displayName || user.name || "ユーザー";
+  const isAdmin = isAdminEmail(user.email);
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -113,10 +117,13 @@ export default async function UserProfilePage({ params }: ProfilePageProps) {
           <Card className="mb-8">
             <CardContent className="pt-6">
               <div className="flex flex-col sm:flex-row items-center gap-6">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src={user.image || ""} />
-                  <AvatarFallback className="text-3xl">{initials}</AvatarFallback>
-                </Avatar>
+                <AdminAvatar
+                  isAdmin={isAdmin}
+                  customAvatar={user.customAvatar}
+                  image={user.image}
+                  name={user.name}
+                  size="lg"
+                />
                 <div className="text-center sm:text-left flex-1">
                   <h1 className="text-2xl font-bold">{displayName}</h1>
                   {user.bio && (

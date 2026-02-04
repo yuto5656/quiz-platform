@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { isAdminEmail } from "@/lib/env";
 import { z } from "zod";
 
 const createCommentSchema = z.object({
@@ -75,7 +76,7 @@ export async function POST(request: NextRequest) {
       },
       include: {
         user: {
-          select: { id: true, name: true, image: true },
+          select: { id: true, name: true, displayName: true, image: true, email: true, customAvatar: true },
         },
       },
     });
@@ -84,7 +85,14 @@ export async function POST(request: NextRequest) {
       {
         id: comment.id,
         content: comment.content,
-        user: comment.user,
+        user: {
+          id: comment.user.id,
+          name: comment.user.name,
+          displayName: comment.user.displayName,
+          image: comment.user.image,
+          customAvatar: comment.user.customAvatar,
+          isAdmin: isAdminEmail(comment.user.email),
+        },
         questionId: comment.questionId,
         parentId: comment.parentId,
         createdAt: comment.createdAt.toISOString(),
@@ -153,13 +161,13 @@ export async function GET(request: NextRequest) {
         take: params.limit,
         include: {
           user: {
-            select: { id: true, name: true, image: true },
+            select: { id: true, name: true, displayName: true, image: true, email: true, customAvatar: true },
           },
           replies: {
             orderBy: { createdAt: "asc" },
             include: {
               user: {
-                select: { id: true, name: true, image: true },
+                select: { id: true, name: true, displayName: true, image: true, email: true, customAvatar: true },
               },
             },
           },
@@ -170,10 +178,19 @@ export async function GET(request: NextRequest) {
       }),
     ]);
 
+    const formatUser = (user: { id: string; name: string | null; displayName: string | null; image: string | null; email: string | null; customAvatar: string | null }) => ({
+      id: user.id,
+      name: user.name,
+      displayName: user.displayName,
+      image: user.image,
+      customAvatar: user.customAvatar,
+      isAdmin: isAdminEmail(user.email),
+    });
+
     const formattedComments = comments.map((c) => ({
       id: c.id,
       content: c.content,
-      user: c.user,
+      user: formatUser(c.user),
       questionId: c.questionId,
       parentId: c.parentId,
       createdAt: c.createdAt.toISOString(),
@@ -181,7 +198,7 @@ export async function GET(request: NextRequest) {
       replies: c.replies.map((r) => ({
         id: r.id,
         content: r.content,
-        user: r.user,
+        user: formatUser(r.user),
         questionId: r.questionId,
         parentId: r.parentId,
         createdAt: r.createdAt.toISOString(),

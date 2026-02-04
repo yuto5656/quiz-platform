@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AdminAvatar } from "@/components/common/admin-avatar";
 import { Clock, PlayCircle, Users } from "lucide-react";
 
 interface QuizCardProps {
@@ -18,7 +18,10 @@ interface QuizCardProps {
     author: {
       id: string;
       name: string | null;
+      displayName: string | null;
       image: string | null;
+      customAvatar?: string | null;
+      isAdmin?: boolean;
     };
     category: {
       id: string;
@@ -34,12 +37,7 @@ interface QuizCardProps {
 }
 
 export function QuizCard({ quiz, showAuthor = true }: QuizCardProps) {
-  const initials =
-    quiz.author.name
-      ?.split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase() || "?";
+  const authorDisplayName = quiz.author.displayName || quiz.author.name;
 
   return (
     <Link href={`/quiz/${quiz.id}`}>
@@ -69,12 +67,15 @@ export function QuizCard({ quiz, showAuthor = true }: QuizCardProps) {
           <div className="flex items-center justify-between">
             {showAuthor && (
               <div className="flex items-center space-x-2">
-                <Avatar className="h-6 w-6">
-                  <AvatarImage src={quiz.author.image || ""} />
-                  <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-                </Avatar>
+                <AdminAvatar
+                  isAdmin={quiz.author.isAdmin ?? false}
+                  customAvatar={quiz.author.customAvatar}
+                  image={quiz.author.image}
+                  name={authorDisplayName}
+                  size="xs"
+                />
                 <span className="text-sm text-muted-foreground">
-                  {quiz.author.name || "Unknown"}
+                  {authorDisplayName || "Unknown"}
                 </span>
               </div>
             )}

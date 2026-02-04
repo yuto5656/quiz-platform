@@ -3,12 +3,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { isAdminEmail } from "@/lib/env";
 import { generateQuizMetadata, generateQuizJsonLd } from "@/lib/seo";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AdminAvatar } from "@/components/common/admin-avatar";
 import {
   Card,
   CardContent,
@@ -67,7 +68,7 @@ async function getQuiz(id: string) {
       where: { id },
       include: {
         author: {
-          select: { id: true, name: true, image: true, bio: true },
+          select: { id: true, name: true, displayName: true, image: true, bio: true, email: true, customAvatar: true },
         },
         category: {
           select: { id: true, name: true, slug: true },
@@ -85,27 +86,46 @@ async function getQuiz(id: string) {
   }
 }
 
+async function getCurrentUser(userId: string) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, displayName: true, image: true, email: true, customAvatar: true },
+    });
+    if (!user) return null;
+    return {
+      id: user.id,
+      name: user.name,
+      displayName: user.displayName,
+      image: user.image,
+      customAvatar: user.customAvatar,
+      isAdmin: isAdminEmail(user.email),
+    };
+  } catch (error) {
+    console.error("Failed to fetch current user:", error);
+    return null;
+  }
+}
+
 export default async function QuizDetailPage({ params }: Props) {
   const { id } = await params;
-  const quiz = await getQuiz(id);
+  const [quiz, session] = await Promise.all([getQuiz(id), auth()]);
 
   if (!quiz) {
     notFound();
   }
 
   if (!quiz.isPublic) {
-    const session = await auth();
     if (!session?.user || session.user.id !== quiz.authorId) {
       notFound();
     }
   }
 
-  const initials =
-    quiz.author.name
-      ?.split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase() || "?";
+  // コメント用にcurrentUser情報を取得
+  const currentUser = session?.user?.id ? await getCurrentUser(session.user.id) : null;
+
+  const authorDisplayName = quiz.author.displayName || quiz.author.name;
+  const isAuthorAdmin = isAdminEmail(quiz.author.email);
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -190,12 +210,15 @@ export default async function QuizDetailPage({ params }: Props) {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-4">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={quiz.author.image || ""} />
-                      <AvatarFallback>{initials}</AvatarFallback>
-                    </Avatar>
+                    <AdminAvatar
+                      isAdmin={isAuthorAdmin}
+                      customAvatar={quiz.author.customAvatar}
+                      image={quiz.author.image}
+                      name={authorDisplayName}
+                      size="sm"
+                    />
                     <div>
-                      <p className="font-medium">{quiz.author.name}</p>
+                      <p className="font-medium">{authorDisplayName}</p>
                       {quiz.author.bio && (
                         <p className="text-sm text-muted-foreground line-clamp-2">
                           {quiz.author.bio}
@@ -207,7 +230,7 @@ export default async function QuizDetailPage({ params }: Props) {
               </Card>
 
               {/* Comment Section */}
-              <CommentSection quizId={quiz.id} quizAuthorId={quiz.authorId} />
+              <CommentSection quizId={quiz.id} quizAuthorId={quiz.authorId} currentUser={currentUser} />
             </div>
 
             {/* Sidebar */}

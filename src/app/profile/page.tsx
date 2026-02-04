@@ -18,7 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { AdminAvatar } from "@/components/common/admin-avatar";
-import { Loader2, Save, ArrowLeft } from "lucide-react";
+import { Loader2, Save, ArrowLeft, X, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 
 interface UserData {
@@ -28,6 +28,7 @@ interface UserData {
   image: string | null;
   displayName: string | null;
   bio: string | null;
+  customAvatar: string | null;
 }
 
 export default function ProfilePage() {
@@ -40,6 +41,8 @@ export default function ProfilePage() {
 
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
+  const [customAvatar, setCustomAvatar] = useState("");
+  const [avatarError, setAvatarError] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -57,6 +60,7 @@ export default function ProfilePage() {
           setUser(data.user);
           setDisplayName(data.user.displayName || "");
           setBio(data.user.bio || "");
+          setCustomAvatar(data.user.customAvatar || "");
         }
       } catch (error) {
         console.error("Failed to fetch user:", error);
@@ -94,6 +98,7 @@ export default function ProfilePage() {
         body: JSON.stringify({
           displayName: displayName || undefined,
           bio: bio || undefined,
+          customAvatar: customAvatar || null,
         }),
       });
 
@@ -160,21 +165,76 @@ export default function ProfilePage() {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Avatar and Account Info */}
+                  {/* Avatar Preview */}
                   <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
                     <AdminAvatar
                       isAdmin={isAdmin}
+                      customAvatar={customAvatar && !avatarError ? customAvatar : undefined}
                       image={user.image}
                       name={user.name}
                       size="md"
                     />
                     <div>
-                      <p className="font-medium">{user.name || "ユーザー"}</p>
+                      <p className="font-medium">{displayName || user.name || "ユーザー"}</p>
                       <p className="text-sm text-muted-foreground">{user.email}</p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        アバターとメールはログインプロバイダから取得されます
+                        上記はクイズカード等に表示されるプレビューです
                       </p>
                     </div>
+                  </div>
+
+                  {/* Custom Avatar URL */}
+                  <div className="space-y-2">
+                    <Label htmlFor="customAvatar">カスタムアバター</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="customAvatar"
+                        type="url"
+                        placeholder="https://example.com/avatar.png"
+                        value={customAvatar}
+                        onChange={(e) => {
+                          setCustomAvatar(e.target.value);
+                          setAvatarError(false);
+                        }}
+                        maxLength={500}
+                        className="flex-1"
+                      />
+                      {customAvatar && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => {
+                            setCustomAvatar("");
+                            setAvatarError(false);
+                          }}
+                          title="クリア"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    {customAvatar && !avatarError && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">プレビュー:</span>
+                        {/* Hidden img to detect load errors */}
+                        <img
+                          src={customAvatar}
+                          alt="Avatar preview"
+                          className="h-8 w-8 rounded-full object-cover"
+                          onError={() => setAvatarError(true)}
+                        />
+                      </div>
+                    )}
+                    {avatarError && (
+                      <p className="text-xs text-destructive">
+                        画像の読み込みに失敗しました。URLを確認してください。
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      設定するとGoogleアバターの代わりにこの画像が表示されます。未設定の場合はデフォルトアイコンが表示されます。
+                    </p>
                   </div>
 
                   {/* Display Name */}

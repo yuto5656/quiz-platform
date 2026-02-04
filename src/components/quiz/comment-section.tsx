@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AdminAvatar } from "@/components/common/admin-avatar";
 import {
   Card,
   CardContent,
@@ -38,7 +38,10 @@ import { ja } from "date-fns/locale";
 interface User {
   id: string;
   name: string | null;
+  displayName: string | null;
   image: string | null;
+  customAvatar: string | null;
+  isAdmin: boolean;
 }
 
 interface Comment {
@@ -51,14 +54,24 @@ interface Comment {
   replies?: Comment[];
 }
 
+interface CurrentUser {
+  id: string;
+  name: string | null;
+  displayName?: string | null;
+  image: string | null;
+  customAvatar?: string | null;
+  isAdmin?: boolean;
+}
+
 interface CommentSectionProps {
   quizId: string;
   quizAuthorId: string;
   questionId?: string; // 問題ごとのコメント用
   compact?: boolean; // 一問一答モード用のコンパクト表示
+  currentUser?: CurrentUser | null; // コメント入力フォーム用
 }
 
-export function CommentSection({ quizId, quizAuthorId, questionId, compact = false }: CommentSectionProps) {
+export function CommentSection({ quizId, quizAuthorId, questionId, compact = false, currentUser }: CommentSectionProps) {
   const { data: session } = useSession();
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -219,16 +232,17 @@ export function CommentSection({ quizId, quizAuthorId, questionId, compact = fal
         className={`${isReply ? "ml-8 mt-3 border-l-2 pl-4" : ""}`}
       >
         <div className="flex gap-3">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={comment.user.image || undefined} />
-            <AvatarFallback>
-              {comment.user.name?.[0] || "?"}
-            </AvatarFallback>
-          </Avatar>
+          <AdminAvatar
+            isAdmin={comment.user.isAdmin}
+            customAvatar={comment.user.customAvatar}
+            image={comment.user.image}
+            name={comment.user.displayName || comment.user.name}
+            size="sm"
+          />
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <span className="font-medium text-sm">
-                {comment.user.name || "匿名ユーザー"}
+                {comment.user.displayName || comment.user.name || "匿名ユーザー"}
               </span>
               <span className="text-xs text-muted-foreground">
                 {formatDistanceToNow(new Date(comment.createdAt), {
@@ -390,12 +404,13 @@ export function CommentSection({ quizId, quizAuthorId, questionId, compact = fal
         {session?.user ? (
           <form onSubmit={handleSubmit} className="mb-6">
             <div className="flex gap-3">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={session.user.image || undefined} />
-                <AvatarFallback>
-                  {session.user.name?.[0] || "?"}
-                </AvatarFallback>
-              </Avatar>
+              <AdminAvatar
+                isAdmin={currentUser?.isAdmin ?? false}
+                customAvatar={currentUser?.customAvatar}
+                image={currentUser?.image || session.user.image}
+                name={currentUser?.displayName || currentUser?.name || session.user.name}
+                size="sm"
+              />
               <div className="flex-1 space-y-2">
                 <Textarea
                   placeholder="コメントを入力..."

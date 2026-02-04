@@ -1,18 +1,20 @@
 "use client";
 
-import { Monitor } from "lucide-react";
+import { Monitor, CircleUser } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
 interface AdminAvatarProps {
   isAdmin: boolean;
+  customAvatar?: string | null;
   image?: string | null;
   name?: string | null;
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
   className?: string;
 }
 
 const sizeConfig = {
+  xs: { container: "h-6 w-6", icon: "h-3 w-3" },
   sm: { container: "h-8 w-8", icon: "h-4 w-4" },
   md: { container: "h-16 w-16", icon: "h-8 w-8" },
   lg: { container: "h-20 w-20", icon: "h-10 w-10" },
@@ -20,19 +22,19 @@ const sizeConfig = {
 
 export function AdminAvatar({
   isAdmin,
+  customAvatar,
   image,
   name,
   size = "md",
   className,
 }: AdminAvatarProps) {
-  const initials =
-    name
-      ?.split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase() || "?";
-
   const { container, icon } = sizeConfig[size];
+
+  // 表示優先順位:
+  // 1. isAdmin → PCアイコン
+  // 2. customAvatar → カスタム画像
+  // 3. 未設定 → デフォルトユーザーアイコン（CircleUser）
+  // ※ Googleアバター(image)や名前のイニシャルは使用しない（プライバシー保護）
 
   if (isAdmin) {
     return (
@@ -48,12 +50,27 @@ export function AdminAvatar({
     );
   }
 
+  if (customAvatar) {
+    return (
+      <Avatar className={cn(container, className)}>
+        <AvatarImage src={customAvatar} alt={name || "User avatar"} />
+        <AvatarFallback className="bg-muted">
+          <CircleUser className={cn(icon, "text-muted-foreground")} />
+        </AvatarFallback>
+      </Avatar>
+    );
+  }
+
+  // デフォルト: 汎用ユーザーアイコン
   return (
-    <Avatar className={cn(container, className)}>
-      <AvatarImage src={image || ""} alt={name || ""} />
-      <AvatarFallback className={size === "sm" ? "" : size === "lg" ? "text-2xl" : "text-xl"}>
-        {initials}
-      </AvatarFallback>
-    </Avatar>
+    <div
+      className={cn(
+        container,
+        "rounded-full bg-muted flex items-center justify-center",
+        className
+      )}
+    >
+      <CircleUser className={cn(icon, "text-muted-foreground")} />
+    </div>
   );
 }

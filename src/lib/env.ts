@@ -58,3 +58,18 @@ export const env = createEnv({
    */
   emptyStringAsUndefined: true,
 });
+
+/**
+ * Get admin emails as an array
+ */
+export function getAdminEmails(): string[] {
+  return env.ADMIN_EMAILS?.split(",").map((e) => e.trim()) || [];
+}
+
+/**
+ * Check if an email is an admin email
+ */
+export function isAdminEmail(email: string | null | undefined): boolean {
+  if (!email) return false;
+  return getAdminEmails().includes(email);
+}

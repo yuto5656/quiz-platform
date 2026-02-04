@@ -20,7 +20,7 @@ interface Quiz {
   id: string;
   title: string;
   description: string | null;
-  author: { id: string; name: string | null; image: string | null };
+  author: { id: string; name: string | null; displayName: string | null; image: string | null; isAdmin?: boolean };
   category: { id: string; name: string; slug: string };
   questionCount: number;
   playCount: number;

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { isAdminEmail } from "@/lib/env";
 import { generateCategoryMetadata } from "@/lib/seo";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
@@ -37,7 +38,7 @@ async function getQuizzes(categoryId: string, page: number = 1, perPage: number 
         skip,
         take: perPage,
         include: {
-          author: { select: { id: true, name: true, image: true } },
+          author: { select: { id: true, name: true, displayName: true, image: true, email: true, customAvatar: true } },
           category: { select: { id: true, name: true, slug: true } },
           _count: { select: { questions: true } },
         },
@@ -52,7 +53,14 @@ async function getQuizzes(categoryId: string, page: number = 1, perPage: number 
         id: q.id,
         title: q.title,
         description: q.description,
-        author: q.author,
+        author: {
+          id: q.author.id,
+          name: q.author.name,
+          displayName: q.author.displayName,
+          image: q.author.image,
+          customAvatar: q.author.customAvatar,
+          isAdmin: isAdminEmail(q.author.email),
+        },
         category: q.category,
         questionCount: q._count.questions,
         playCount: q.playCount,

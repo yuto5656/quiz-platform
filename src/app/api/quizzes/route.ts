@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { isAdminEmail } from "@/lib/env";
 import { z } from "zod";
 
 const querySchema = z.object({
@@ -60,7 +61,7 @@ export async function GET(request: NextRequest) {
         take: params.limit,
         include: {
           author: {
-            select: { id: true, name: true, image: true },
+            select: { id: true, name: true, displayName: true, image: true, email: true, customAvatar: true },
           },
           category: {
             select: { id: true, name: true, slug: true },
@@ -77,7 +78,14 @@ export async function GET(request: NextRequest) {
       id: quiz.id,
       title: quiz.title,
       description: quiz.description,
-      author: quiz.author,
+      author: {
+        id: quiz.author.id,
+        name: quiz.author.name,
+        displayName: quiz.author.displayName,
+        image: quiz.author.image,
+        customAvatar: quiz.author.customAvatar,
+        isAdmin: isAdminEmail(quiz.author.email),
+      },
       category: quiz.category,
       status: quiz.status,
       questionCount: quiz._count.questions,
@@ -192,7 +200,7 @@ export async function POST(request: NextRequest) {
         },
       },
       include: {
-        author: { select: { id: true, name: true, image: true } },
+        author: { select: { id: true, name: true, displayName: true, image: true } },
         category: { select: { id: true, name: true, slug: true } },
         _count: { select: { questions: true } },
       },

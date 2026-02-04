@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
+import { isAdminEmail } from "@/lib/env";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { QuizCard } from "@/components/quiz/quiz-card";
@@ -38,7 +39,7 @@ async function getPopularQuizzes() {
       orderBy: { playCount: "desc" },
       take: 6,
       include: {
-        author: { select: { id: true, name: true, image: true } },
+        author: { select: { id: true, name: true, displayName: true, image: true, email: true, customAvatar: true } },
         category: { select: { id: true, name: true, slug: true } },
         _count: { select: { questions: true } },
       },
@@ -47,7 +48,14 @@ async function getPopularQuizzes() {
       id: q.id,
       title: q.title,
       description: q.description,
-      author: q.author,
+      author: {
+        id: q.author.id,
+        name: q.author.name,
+        displayName: q.author.displayName,
+        image: q.author.image,
+        customAvatar: q.author.customAvatar,
+        isAdmin: isAdminEmail(q.author.email),
+      },
       category: q.category,
       questionCount: q._count.questions,
       playCount: q.playCount,
@@ -67,7 +75,7 @@ async function getNewestQuizzes() {
       orderBy: { createdAt: "desc" },
       take: 6,
       include: {
-        author: { select: { id: true, name: true, image: true } },
+        author: { select: { id: true, name: true, displayName: true, image: true, email: true, customAvatar: true } },
         category: { select: { id: true, name: true, slug: true } },
         _count: { select: { questions: true } },
       },
@@ -76,7 +84,14 @@ async function getNewestQuizzes() {
       id: q.id,
       title: q.title,
       description: q.description,
-      author: q.author,
+      author: {
+        id: q.author.id,
+        name: q.author.name,
+        displayName: q.author.displayName,
+        image: q.author.image,
+        customAvatar: q.author.customAvatar,
+        isAdmin: isAdminEmail(q.author.email),
+      },
       category: q.category,
       questionCount: q._count.questions,
       playCount: q.playCount,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { sanitizeInput } from "@/lib/api-response";
 import { z } from "zod";
 
 export async function GET() {
@@ -19,6 +20,7 @@ export async function GET() {
         image: true,
         displayName: true,
         bio: true,
+        customAvatar: true,
         totalScore: true,
         quizzesTaken: true,
         quizzesCreated: true,
@@ -80,6 +82,7 @@ export async function GET() {
 const updateUserSchema = z.object({
   displayName: z.string().max(50).optional(),
   bio: z.string().max(500).optional(),
+  customAvatar: z.string().url().max(500).optional().nullable(),
 });
 
 export async function PUT(request: NextRequest) {
@@ -92,12 +95,16 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const data = updateUserSchema.parse(body);
 
+    // Sanitize inputs for XSS protection
+    const sanitizedData = {
+      displayName: data.displayName ? sanitizeInput(data.displayName) : undefined,
+      bio: data.bio ? sanitizeInput(data.bio) : undefined,
+      customAvatar: data.customAvatar === null ? null : data.customAvatar,
+    };
+
     const user = await prisma.user.update({
       where: { id: session.user.id },
-      data: {
-        displayName: data.displayName,
-        bio: data.bio,
-      },
+      data: sanitizedData,
       select: {
         id: true,
         name: true,
@@ -105,6 +112,7 @@ export async function PUT(request: NextRequest) {
         image: true,
         displayName: true,
         bio: true,
+        customAvatar: true,
       },
     });
 
