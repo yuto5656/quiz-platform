@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -331,6 +330,40 @@ export default function RankingsPage() {
 
           {/* Bottom Ad */}
           <InFeedAd className="mt-8" />
+
+          {/* About Rankings Section */}
+          <section className="mt-12 border-t pt-8">
+            <h2 className="text-xl font-bold mb-4">ランキングについて</h2>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="p-4 bg-background rounded-lg border">
+                <h3 className="font-semibold flex items-center gap-2 mb-2">
+                  <Users className="h-4 w-4 text-primary" />
+                  ユーザーランキング
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  クイズに挑戦して獲得したポイントの合計で順位が決まります。たくさんのクイズに挑戦して上位を目指しましょう。
+                </p>
+              </div>
+              <div className="p-4 bg-background rounded-lg border">
+                <h3 className="font-semibold flex items-center gap-2 mb-2">
+                  <Gamepad2 className="h-4 w-4 text-primary" />
+                  クイズランキング
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  プレイ回数が多いクイズのランキングです。人気のクイズをチェックして、トレンドを把握しましょう。
+                </p>
+              </div>
+              <div className="p-4 bg-background rounded-lg border">
+                <h3 className="font-semibold flex items-center gap-2 mb-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  クリエイターランキング
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  作成したクイズの総プレイ数でランキング。魅力的なクイズを作成して、トップクリエイターを目指しましょう。
+                </p>
+              </div>
+            </div>
+          </section>
         </div>
       </main>
       <Footer />

@@ -234,6 +234,44 @@ export default async function HomePage() {
           </section>
         )}
 
+        {/* About Section */}
+        <section className="border-t py-12">
+          <div className="container">
+            <div className="mx-auto max-w-3xl">
+              <h2 className="text-2xl font-bold text-center mb-8">Quiz Platformとは</h2>
+              <div className="grid gap-6 md:grid-cols-3">
+                <div className="text-center p-4">
+                  <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                    <Sparkles className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="font-semibold mb-2">簡単にクイズ作成</h3>
+                  <p className="text-sm text-muted-foreground">
+                    誰でも無料でオリジナルのクイズを作成できます。一問一答形式で、学習や知識の共有に最適です。
+                  </p>
+                </div>
+                <div className="text-center p-4">
+                  <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                    <Trophy className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="font-semibold mb-2">ランキングで競争</h3>
+                  <p className="text-sm text-muted-foreground">
+                    クイズに挑戦してスコアを競いましょう。ランキング機能で他のユーザーと成績を比較できます。
+                  </p>
+                </div>
+                <div className="text-center p-4">
+                  <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                    <Users className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="font-semibold mb-2">コミュニティで共有</h3>
+                  <p className="text-sm text-muted-foreground">
+                    作成したクイズは公開して他のユーザーと共有。コメント機能でフィードバックも受け取れます。
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* CTA */}
         <section className="border-t bg-muted/30 py-12">
           <div className="container">
