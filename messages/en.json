@@ -30,7 +30,8 @@
     "logout": "Logout",
     "dashboard": "Dashboard",
     "profile": "Profile",
-    "settings": "Settings"
+    "settings": "Settings",
+    "favorites": "Favorites"
   },
   "home": {
     "hero": {
@@ -182,6 +183,16 @@
     "terms": "Terms of Service",
     "privacy": "Privacy Policy",
     "contact": "Contact"
+  },
+  "favorites": {
+    "title": "Favorites",
+    "subtitle": "Your favorite quizzes",
+    "empty": {
+      "title": "No favorites yet",
+      "message": "Save your favorite quizzes to access them anytime",
+      "action": "Explore Quizzes"
+    },
+    "count": "{count} quizzes"
   },
   "contact": {
     "title": "Contact Us",

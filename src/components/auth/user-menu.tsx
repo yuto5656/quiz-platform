@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AdminAvatar } from "@/components/common/admin-avatar";
-import { User, Settings, LogOut, PlusCircle, LayoutDashboard, Shield } from "lucide-react";
+import { User, Settings, LogOut, PlusCircle, LayoutDashboard, Shield, Heart } from "lucide-react";
 
 interface UserMenuProps {
   user: {
@@ -83,6 +83,12 @@ export function UserMenu({ user }: UserMenuProps) {
           <Link href="/create">
             <PlusCircle className="mr-2 h-4 w-4" />
             クイズ作成
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/favorites">
+            <Heart className="mr-2 h-4 w-4" />
+            お気に入り
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>

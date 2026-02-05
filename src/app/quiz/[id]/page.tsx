@@ -28,6 +28,7 @@ import { SidebarAd, InFeedAd } from "@/components/ads";
 import { ShareButton } from "@/components/common/share-button";
 import { CommentSection } from "@/components/quiz/comment-section";
 import { QuizCard } from "@/components/quiz/quiz-card";
+import { LikeButton } from "@/components/quiz/like-button";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -83,6 +84,25 @@ async function getQuiz(id: string) {
     return quiz;
   } catch (error) {
     console.error("Failed to fetch quiz:", error);
+    return null;
+  }
+}
+
+async function getUserLike(userId: string | undefined, quizId: string) {
+  if (!userId) return null;
+
+  try {
+    const like = await prisma.like.findUnique({
+      where: {
+        userId_quizId: {
+          userId,
+          quizId,
+        },
+      },
+    });
+    return like;
+  } catch (error) {
+    console.error("Failed to fetch user like:", error);
     return null;
   }
 }
@@ -169,10 +189,11 @@ export default async function QuizDetailPage({ params }: Props) {
     }
   }
 
-  // コメント用にcurrentUser情報を取得、関連クイズを取得
-  const [currentUser, relatedQuizzes] = await Promise.all([
+  // コメント用にcurrentUser情報を取得、関連クイズを取得、お気に入り状態を取得
+  const [currentUser, relatedQuizzes, userLike] = await Promise.all([
     session?.user?.id ? getCurrentUser(session.user.id) : Promise.resolve(null),
     getRelatedQuizzes(quiz.id, quiz.category?.id || null),
+    getUserLike(session?.user?.id, quiz.id),
   ]);
 
   const authorDisplayName = quiz.author.displayName || quiz.author.name;
@@ -330,13 +351,22 @@ export default async function QuizDetailPage({ params }: Props) {
                       クイズを開始
                     </Link>
                   </Button>
-                  <ShareButton
-                    url={`/quiz/${quiz.id}`}
-                    title={quiz.title}
-                    description={quiz.description || `${quiz._count.questions}問のクイズに挑戦しよう！`}
-                    variant="outline"
-                    size="sm"
-                  />
+                  <div className="flex gap-2">
+                    <LikeButton
+                      quizId={quiz.id}
+                      initialLiked={!!userLike}
+                      initialCount={quiz.likeCount}
+                      className="flex-1"
+                    />
+                    <ShareButton
+                      url={`/quiz/${quiz.id}`}
+                      title={quiz.title}
+                      description={quiz.description || `${quiz._count.questions}問のクイズに挑戦しよう！`}
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                    />
+                  </div>
                 </CardContent>
               </Card>
 

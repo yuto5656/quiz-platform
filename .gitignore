@@ -45,4 +45,7 @@ next-env.d.ts
 # claude code
 .claude/
 
+# multi-agent scripts (local experiments)
+/scripts/multi-agent/
+
 .vercel
