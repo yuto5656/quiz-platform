@@ -49,6 +49,12 @@ export function Header() {
               <span className="sr-only">{t("search")}</span>
             </Link>
           </Button>
+          <Button variant="ghost" size="icon" className="md:hidden" asChild>
+            <Link href="/rankings">
+              <Trophy className="h-5 w-5" />
+              <span className="sr-only">{t("rankings")}</span>
+            </Link>
+          </Button>
           <LanguageSwitcher />
           <ThemeToggle />
           {status === "loading" ? (
